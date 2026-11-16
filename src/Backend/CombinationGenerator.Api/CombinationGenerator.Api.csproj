@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Api: HTTP, DTOs ושגיאות. Infrastructure מוזכר כאן רק לצורך רישום ב-DI (Composition Root). -->
+  <ItemGroup>
+    <ProjectReference Include="..\CombinationGenerator.Application\CombinationGenerator.Application.csproj" />
+    <ProjectReference Include="..\CombinationGenerator.Infrastructure\CombinationGenerator.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

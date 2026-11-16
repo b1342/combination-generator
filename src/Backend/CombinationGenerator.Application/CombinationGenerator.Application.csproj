@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Application: תזמור קריאה-החלטה-שמירה. מכיר רק את Domain. -->
+  <ItemGroup>
+    <ProjectReference Include="..\CombinationGenerator.Domain\CombinationGenerator.Domain.csproj" />
+  </ItemGroup>
+</Project>

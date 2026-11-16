@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Infrastructure: אחסון ה-Sessions בזיכרון, תפוגה וניקוי. מממש ממשקים שמוגדרים ב-Application. -->
+  <ItemGroup>
+    <ProjectReference Include="..\CombinationGenerator.Application\CombinationGenerator.Application.csproj" />
+    <ProjectReference Include="..\CombinationGenerator.Domain\CombinationGenerator.Domain.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,46 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Domain", "src\Backend\CombinationGenerator.Domain\CombinationGenerator.Domain.csproj", "{1A0C1E10-0D6F-4C2B-9A01-000000000001}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Application", "src\Backend\CombinationGenerator.Application\CombinationGenerator.Application.csproj", "{1A0C1E10-0D6F-4C2B-9A01-000000000002}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Infrastructure", "src\Backend\CombinationGenerator.Infrastructure\CombinationGenerator.Infrastructure.csproj", "{1A0C1E10-0D6F-4C2B-9A01-000000000003}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Api", "src\Backend\CombinationGenerator.Api\CombinationGenerator.Api.csproj", "{1A0C1E10-0D6F-4C2B-9A01-000000000004}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Domain.Tests", "tests\CombinationGenerator.Domain.Tests\CombinationGenerator.Domain.Tests.csproj", "{1A0C1E10-0D6F-4C2B-9A01-000000000005}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A0C1E10-0D6F-4C2B-9A01-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000005}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000005}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000005}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
