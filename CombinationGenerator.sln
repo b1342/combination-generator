@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Api", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Domain.Tests", "tests\CombinationGenerator.Domain.Tests\CombinationGenerator.Domain.Tests.csproj", "{1A0C1E10-0D6F-4C2B-9A01-000000000005}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CombinationGenerator.Application.Tests", "tests\CombinationGenerator.Application.Tests\CombinationGenerator.Application.Tests.csproj", "{1A0C1E10-0D6F-4C2B-9A01-000000000006}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{1A0C1E10-0D6F-4C2B-9A01-000000000005}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A0C1E10-0D6F-4C2B-9A01-000000000005}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A0C1E10-0D6F-4C2B-9A01-000000000005}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A0C1E10-0D6F-4C2B-9A01-000000000006}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
