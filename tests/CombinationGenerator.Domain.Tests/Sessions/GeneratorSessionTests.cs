@@ -122,6 +122,7 @@ public class GeneratorSessionTests
     [InlineData(PageNavigation.Last)]
     [InlineData(PageNavigation.Previous)]
     [InlineData(PageNavigation.Specific)]
+    [InlineData(PageNavigation.Current)]
     public void EnterAll_RequiresFirst(PageNavigation action)
     {
         var session = GeneratorSession.Create(3);
@@ -193,11 +194,81 @@ public class GeneratorSessionTests
     }
 
     [Fact]
-    public void Navigate_WithDifferentPageSize_IsRejected()
+    public void Navigate_Current_StaysOnSamePage()
     {
-        var all = Changed(GeneratorSession.Create(3).ShowAll(Nav(PageNavigation.First, 2)));
+        var all = Changed(GeneratorSession.Create(4).ShowAll(Nav(PageNavigation.First, 5)));
+        all = Changed(all.ShowAll(Nav(PageNavigation.Specific, 5, 3)));
 
-        Assert.Equal(DomainError.PageSizeLocked, Rejected(all.ShowAll(Nav(PageNavigation.First, 3))));
+        var same = Changed(all.ShowAll(Nav(PageNavigation.Current, 5)));
+
+        Assert.Equal(new AllProgress(0, 5, 3), AllOf(same));
+    }
+
+    // ---------- שינוי גודל עמוד ----------
+
+    [Fact]
+    public void Resize_KeepsAnchor_AndShowsPageContainingTopRow()
+    {
+        // N=4, 5 בעמוד, עמוד 3 = שורות 11–15 (אינדקסים 10–14). משנים ל-10.
+        var all = Changed(GeneratorSession.Create(4).ShowAll(Nav(PageNavigation.First, 5)));
+        all = Changed(all.ShowAll(Nav(PageNavigation.Specific, 5, 3)));
+
+        var resized = Changed(all.ShowAll(Nav(PageNavigation.Current, 10)));
+
+        Assert.Equal(new AllProgress(StartIndex: 0, PageSize: 10, PageNumber: 2), AllOf(resized));
+        Assert.Equal(10, resized.CurrentPage!.Value.StartIndex); // שורה 11 עדיין בראש המסך
+    }
+
+    [Fact]
+    public void Resize_PageCanStartBeforeTopRow_ButStillContainsIt()
+    {
+        // N=4, 3 בעמוד, עמוד 2 = אינדקסים 3–5. משנים ל-5: העמוד שמכיל את אינדקס 3 הוא עמוד 1 (0–4).
+        var all = Changed(GeneratorSession.Create(4).ShowAll(Nav(PageNavigation.First, 3)));
+        all = Changed(all.ShowAll(Nav(PageNavigation.Next, 3)));
+
+        var resized = Changed(all.ShowAll(Nav(PageNavigation.Current, 5)));
+
+        Assert.Equal(new AllProgress(0, 5, 1), AllOf(resized));
+        var page = resized.CurrentPage!.Value;
+        Assert.InRange(3L, page.StartIndex, page.LastIndex);
+    }
+
+    [Fact]
+    public void Resize_WithNonZeroAnchor_KeepsAnchor()
+    {
+        // N=3, אחרי שני "הבא": עוגן 2. 2 בעמוד, עמוד 2 = אינדקסים 4–5. משנים ל-3.
+        var session = AfterNext(GeneratorSession.Create(3), 2);
+        session = Changed(session.ShowAll(Nav(PageNavigation.First, 2)));
+        session = Changed(session.ShowAll(Nav(PageNavigation.Next, 2)));
+
+        var resized = Changed(session.ShowAll(Nav(PageNavigation.Current, 3)));
+
+        Assert.Equal(new AllProgress(StartIndex: 2, PageSize: 3, PageNumber: 1), AllOf(resized));
+        var page = resized.CurrentPage!.Value;
+        Assert.InRange(4L, page.StartIndex, page.LastIndex);
+    }
+
+    [Fact]
+    public void Resize_WithRelativeAction_MovesFromRepaginatedPage()
+    {
+        // 5 בעמוד, עמוד 3 (אינדקסים 10–14) ← בגודל 10 זה עמוד 2 ← "דף הבא" = עמוד 3 (20–23)
+        var all = Changed(GeneratorSession.Create(4).ShowAll(Nav(PageNavigation.First, 5)));
+        all = Changed(all.ShowAll(Nav(PageNavigation.Specific, 5, 3)));
+
+        var moved = Changed(all.ShowAll(Nav(PageNavigation.Next, 10)));
+
+        Assert.Equal(new AllProgress(0, 10, 3), AllOf(moved));
+        Assert.Equal(4, moved.CurrentPage!.Value.Count);
+    }
+
+    [Fact]
+    public void Resize_WithAbsoluteAction_UsesNewSize()
+    {
+        var all = Changed(GeneratorSession.Create(4).ShowAll(Nav(PageNavigation.First, 5)));
+
+        Assert.Equal(new AllProgress(0, 7, 4), AllOf(Changed(all.ShowAll(Nav(PageNavigation.Last, 7)))));   // 24 = 7+7+7+3
+        Assert.Equal(new AllProgress(0, 7, 1), AllOf(Changed(all.ShowAll(Nav(PageNavigation.First, 7)))));
+        Assert.Equal(DomainError.InvalidPageNumber, Rejected(all.ShowAll(Nav(PageNavigation.Specific, 7, 5))));
     }
 
     // ---------- "חזור" ----------

@@ -30,9 +30,6 @@ public enum DomainError
     /// <summary>כניסה ל"כל הקומבינציות" מותרת רק דרך "דף ראשון".</summary>
     AllEntryRequiresFirst,
 
-    /// <summary>גודל העמוד קבוע לאורך הביקור ב"כל הקומבינציות".</summary>
-    PageSizeLocked,
-
     /// <summary>גודל עמוד קטן מ-1.</summary>
     InvalidPageSize,
 

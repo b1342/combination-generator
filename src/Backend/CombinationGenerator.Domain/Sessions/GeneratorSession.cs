@@ -92,8 +92,8 @@ public sealed class GeneratorSession
     // ---------- "כל הקומבינציות" ----------
 
     /// <summary>
-    /// כפתור "כל הקומבינציות" וכל כפתורי הדפדוף.
-    /// ממצב "הבא": כניסה (רק עם First). ממצב "כל הקומבינציות": מעבר עמוד.
+    /// כפתור "כל הקומבינציות", כל כפתורי הדפדוף ושינוי גודל העמוד.
+    /// ממצב "הבא": כניסה (רק עם First). ממצב "כל הקומבינציות": מעבר עמוד, אולי בגודל חדש.
     /// </summary>
     public DomainTransition ShowAll(NavigationRequest request)
     {
@@ -131,13 +131,18 @@ public sealed class GeneratorSession
 
     private DomainTransition NavigateAll(AllProgress all, NavigationRequest request)
     {
+        // העוגן (מאיפה הטבלה מתחילה) לא משתנה לעולם בתוך הביקור. גודל העמוד יכול להשתנות.
+        long current = all.PageNumber;
+
         if (request.PageSize != all.PageSize)
         {
-            return Reject(DomainError.PageSizeLocked);
+            // שינוי גודל: מחפשים את העמוד בגודל החדש שמכיל את השורה שהייתה בראש המסך,
+            // כך ששום שורה לא "נעלמת" ו"דף ראשון" עדיין מחזיר לתחילת הטבלה.
+            long topRow = all.StartIndex + (all.PageNumber - 1) * all.PageSize;
+            current = (topRow - all.StartIndex) / request.PageSize + 1;
         }
 
-        long totalPages = PageCalculator.CountPages(TotalCount, all.StartIndex, all.PageSize);
-        long current = all.PageNumber;
+        long totalPages = PageCalculator.CountPages(TotalCount, all.StartIndex, request.PageSize);
         long target;
 
         switch (request.Action)
@@ -148,6 +153,10 @@ public sealed class GeneratorSession
 
             case PageNavigation.Last:
                 target = totalPages;
+                break;
+
+            case PageNavigation.Current:
+                target = current;
                 break;
 
             case PageNavigation.Previous:
@@ -181,8 +190,7 @@ public sealed class GeneratorSession
                 throw new ArgumentOutOfRangeException(nameof(request), request.Action, "Unknown navigation action.");
         }
 
-        // העוגן וגודל העמוד לא משתנים; רק מספר העמוד
-        return ChangeTo(all with { PageNumber = target });
+        return ChangeTo(new AllProgress(all.StartIndex, request.PageSize, target));
     }
 
     // ---------- "חזור" ----------
