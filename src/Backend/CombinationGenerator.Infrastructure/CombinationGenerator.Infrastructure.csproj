@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Infrastructure: אחסון ה-Sessions בזיכרון, תפוגה וניקוי. מממש ממשקים שמוגדרים ב-Application. -->
   <ItemGroup>
+    <!-- נותן את BackgroundService, Options ו-DI, שמגיעים עם ASP.NET Core -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CombinationGenerator.Application\CombinationGenerator.Application.csproj" />
     <ProjectReference Include="..\CombinationGenerator.Domain\CombinationGenerator.Domain.csproj" />
   </ItemGroup>
