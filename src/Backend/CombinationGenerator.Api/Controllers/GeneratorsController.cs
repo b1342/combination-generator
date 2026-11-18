@@ -10,6 +10,7 @@ namespace CombinationGenerator.Api.Controllers;
 /// <summary>
 /// הכתובות שהדפדפן פונה אליהן. כל פונקציה כאן: מקבלת בקשת HTTP, קוראת ל-Service, ומתרגמת את התוצאה ל-HTTP.
 /// אין כאן שום לוגיקה של המערכת.
+/// ה-ProducesResponseType מעל כל פונקציה מתארים ל-Swagger אילו תשובות אפשריות; הם לא משנים את ההתנהגות.
 /// </summary>
 [ApiController]
 [Route("api/generators")]
@@ -24,6 +25,9 @@ public sealed class GeneratorsController : ControllerBase
 
     /// <summary>StartAPI — "התחל". POST /api/generators  גוף: { "n": 3 }</summary>
     [HttpPost]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Start([FromBody] StartRequest request, CancellationToken cancellationToken)
     {
         OperationResult result = await _service.StartAsync(request.N, cancellationToken);
@@ -42,11 +46,16 @@ public sealed class GeneratorsController : ControllerBase
 
     /// <summary>המצב הנוכחי, בלי לשנות כלום. GET /api/generators/{id}</summary>
     [HttpGet("{id:guid}")]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetState(Guid id, CancellationToken cancellationToken) =>
         ToActionResult(await _service.GetStateAsync(id, cancellationToken));
 
     /// <summary>GetNextAPI — "הבא". POST /api/generators/{id}/next</summary>
     [HttpPost("{id:guid}/next")]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Next(Guid id, CancellationToken cancellationToken) =>
         ToActionResult(await _service.NextAsync(id, cancellationToken));
 
@@ -55,6 +64,10 @@ public sealed class GeneratorsController : ControllerBase
     /// POST /api/generators/{id}/all  גוף: { "action": "Next", "pageSize": 20, "pageNumber": "7" }
     /// </summary>
     [HttpPost("{id:guid}/all")]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> ShowAll(Guid id, [FromBody] ShowAllRequest request, CancellationToken cancellationToken)
     {
         // מספר הדף מגיע כטקסט; ממירים אותו ל-long (מדויק עד 9.2 × 10^18)
@@ -74,6 +87,9 @@ public sealed class GeneratorsController : ControllerBase
 
     /// <summary>"חזור". POST /api/generators/{id}/back</summary>
     [HttpPost("{id:guid}/back")]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Back(Guid id, CancellationToken cancellationToken) =>
         ToActionResult(await _service.BackAsync(id, cancellationToken));
 
@@ -82,6 +98,7 @@ public sealed class GeneratorsController : ControllerBase
     /// תמיד 204, גם אם ה-Session כבר לא קיים: התוצאה זהה — אין Session (פעולה אידמפוטנטית).
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Reset(Guid id, CancellationToken cancellationToken)
     {
         await _service.ResetAsync(id, cancellationToken);

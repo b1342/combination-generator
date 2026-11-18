@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using CombinationGenerator.Application.Generators;
 using CombinationGenerator.Infrastructure;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,18 +48,33 @@ builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy
     .AllowAnyMethod()));
 
 // ============================================================
+// 5. Swagger: דף שמתאר את כל הכתובות ומאפשר לנסות אותן מהדפדפן
+// ============================================================
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Combination Generator API", Version = "v1" }));
+
+// ============================================================
 // בניית השרת וסדר הטיפול בבקשה
 // ============================================================
 var app = builder.Build();
 
 app.UseExceptionHandler();      // שגיאה לא צפויה → 500 בפורמט ProblemDetails
 app.UseStatusCodePages();       // 404 על כתובת שלא קיימת → גם בפורמט ProblemDetails
+
+// Swagger רק בפיתוח: בשרת אמיתי לא חושפים את מפת הכתובות
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();           // /swagger/v1/swagger.json — התיאור של ה-API
+    app.UseSwaggerUI();         // /swagger — הדף שאפשר ללחוץ בו
+}
+
 app.UseCors(FrontendCorsPolicy);
 app.MapControllers();
 
 app.Run();
 
-/// <summary>מאפשר לבדיקות של שלב 9 להפעיל את השרת בתוך הבדיקה.</summary>
+/// <summary>מאפשר לבדיקות ה-API להפעיל את השרת בתוך הבדיקה.</summary>
 public partial class Program
 {
 }

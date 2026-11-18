@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <!-- Api: HTTP, DTOs ושגיאות. Infrastructure מוזכר כאן רק לצורך רישום ב-DI (Composition Root). -->
   <ItemGroup>
+    <!-- Swagger: דף אינטרנט שמציג את כל הכתובות ומאפשר לשלוח אליהן בקשות. פעיל רק ב-Development. -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CombinationGenerator.Application\CombinationGenerator.Application.csproj" />
     <ProjectReference Include="..\CombinationGenerator.Infrastructure\CombinationGenerator.Infrastructure.csproj" />
   </ItemGroup>
