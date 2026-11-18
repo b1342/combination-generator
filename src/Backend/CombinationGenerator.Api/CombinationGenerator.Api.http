@@ -1,0 +1,42 @@
+# בקשות לניסוי ידני מתוך Visual Studio.
+# מריצים את השרת (F5), ואז לוחצים "Send request" מעל כל בקשה.
+# אחרי "התחל", מעתיקים את sessionId מהתשובה לשורה הבאה:
+
+@baseUrl = http://localhost:5080
+@id = PASTE-SESSION-ID-HERE
+
+### התחל (StartAPI)
+POST {{baseUrl}}/api/generators
+Content-Type: application/json
+
+{ "n": 3 }
+
+### הבא (GetNextAPI)
+POST {{baseUrl}}/api/generators/{{id}}/next
+
+### כל הקומבינציות (GetAllAPI) — כניסה, 2 בעמוד
+POST {{baseUrl}}/api/generators/{{id}}/all
+Content-Type: application/json
+
+{ "action": "First", "pageSize": 2 }
+
+### דף הבא
+POST {{baseUrl}}/api/generators/{{id}}/all
+Content-Type: application/json
+
+{ "action": "Next", "pageSize": 2 }
+
+### קפיצה לדף מסוים
+POST {{baseUrl}}/api/generators/{{id}}/all
+Content-Type: application/json
+
+{ "action": "Specific", "pageSize": 2, "pageNumber": "1" }
+
+### חזור
+POST {{baseUrl}}/api/generators/{{id}}/back
+
+### המצב הנוכחי
+GET {{baseUrl}}/api/generators/{{id}}
+
+### איפוס
+DELETE {{baseUrl}}/api/generators/{{id}}
