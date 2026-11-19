@@ -13,6 +13,12 @@ internal sealed record ApiError(int StatusCode, string Code, string Title, strin
 /// </summary>
 internal static class ApiErrors
 {
+    /// <summary>
+    /// שגיאה שה-Controller מגלה בעצמו, לפני שהבקשה מגיעה ל-Service: action חסר או לא מוכר.
+    /// </summary>
+    public static readonly ApiError InvalidAction =
+        new(StatusCodes.Status400BadRequest, "INVALID_ACTION", "Invalid action", "הפעולה חייבת להיות אחת מ: First, Previous, Next, Last, Specific, Current.");
+
     public static ApiError For(OperationStatus status) => status switch
     {
         // ---------- 400: הקלט לא תקין ----------

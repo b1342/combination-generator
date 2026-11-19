@@ -16,7 +16,7 @@ public static class DependencyInjection
     {
         services.AddOptions<SessionStoreOptions>()
             .Bind(configuration.GetSection(SessionStoreOptions.SectionName))
-            .Validate(options => options.IsValid, "SessionStore options must all be positive.")
+            .Validate(options => options.IsValid, "SessionStore options must all be positive, and CleanupIntervalSeconds at most 86400.")
             .ValidateOnStart();
 
         services.TryAddSingleton(TimeProvider.System);

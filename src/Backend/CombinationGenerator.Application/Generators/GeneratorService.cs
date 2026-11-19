@@ -19,7 +19,7 @@ public sealed class GeneratorService
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(options);
 
-        if (options.MaxPageSize < 1)
+        if (!options.IsValid)
         {
             throw new ArgumentException("MaxPageSize must be positive.", nameof(options));
         }

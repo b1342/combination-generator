@@ -70,9 +70,15 @@ public sealed class GeneratorsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> ShowAll(Guid id, [FromBody] ShowAllRequest request, CancellationToken cancellationToken)
     {
+        // הפעולה חובה, וחייבת להיות אחד מהשמות המוגדרים
+        if (request.Action is not { } action || !Enum.IsDefined(action))
+        {
+            return ErrorResponse(ApiErrors.InvalidAction);
+        }
+
         // מספר הדף מגיע כטקסט; ממירים אותו ל-long (מדויק עד 9.2 × 10^18)
         long? pageNumber = null;
-        if (request.Action == PageNavigation.Specific)
+        if (action == PageNavigation.Specific)
         {
             if (!long.TryParse(request.PageNumber, NumberStyles.None, CultureInfo.InvariantCulture, out long parsed))
             {
@@ -82,7 +88,7 @@ public sealed class GeneratorsController : ControllerBase
             pageNumber = parsed;
         }
 
-        return ToActionResult(await _service.ShowAllAsync(id, request.Action, request.PageSize, pageNumber, cancellationToken));
+        return ToActionResult(await _service.ShowAllAsync(id, action, request.PageSize, pageNumber, cancellationToken));
     }
 
     /// <summary>"חזור". POST /api/generators/{id}/back</summary>

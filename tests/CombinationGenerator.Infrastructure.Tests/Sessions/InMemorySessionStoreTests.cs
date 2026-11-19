@@ -249,6 +249,7 @@ public class InMemorySessionStoreTests
     [InlineData(0, 1000, 60)]
     [InlineData(30, 0, 60)]
     [InlineData(30, 1000, 0)]
+    [InlineData(30, 1000, 86_401)]     // מרווח ניקוי מעל יום
     public void InvalidOptions_Throw(int timeout, int max, int cleanup)
     {
         var options = Options.Create(new SessionStoreOptions

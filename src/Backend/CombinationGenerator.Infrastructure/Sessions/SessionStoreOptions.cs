@@ -26,6 +26,15 @@ public sealed class SessionStoreOptions
     /// <summary>CleanupIntervalSeconds כ-TimeSpan.</summary>
     public TimeSpan CleanupInterval => TimeSpan.FromSeconds(CleanupIntervalSeconds);
 
-    /// <summary>כל הערכים חייבים להיות חיוביים.</summary>
-    public bool IsValid => IdleTimeoutMinutes > 0 && MaxSessions > 0 && CleanupIntervalSeconds > 0;
+    /// <summary>
+    /// הגבול העליון למרווח הניקוי: יום אחד. מעבר לזה אין היגיון בניקוי, ו-PeriodicTimer גם לא מקבל מרווחים ארוכים מאוד.
+    /// </summary>
+    public const int MaxCleanupIntervalSeconds = 86_400;
+
+    /// <summary>כל הערכים חייבים להיות חיוביים, ומרווח הניקוי לכל היותר יום.</summary>
+    public bool IsValid =>
+        IdleTimeoutMinutes > 0 &&
+        MaxSessions > 0 &&
+        CleanupIntervalSeconds > 0 &&
+        CleanupIntervalSeconds <= MaxCleanupIntervalSeconds;
 }

@@ -149,6 +149,29 @@ public class AllCombinationsTests : IClassFixture<WebApplicationFactory<Program>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Theory]
+    [InlineData("1")]       // מספר של ערך קיים (Previous)
+    [InlineData("99")]      // מספר שאין לו ערך. לפני התיקון: 500
+    public async Task NumericAction_Returns400(string number)
+    {
+        SessionResponse session = await _api.StartOkAsync(3);
+        await _api.AllOkAsync(session.SessionId, "First", 2);          // במצב All, שם 99 היה מגיע ל-throw
+
+        using HttpResponseMessage response =
+            await _api.AllRawAsync(session.SessionId, $"{{ \"action\": {number}, \"pageSize\": 2 }}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task MissingAction_Returns400_AndIsNotTreatedAsFirst()
+    {
+        SessionResponse session = await _api.StartOkAsync(3);
+
+        await GeneratorApi.AssertProblemAsync(
+            await _api.AllRawAsync(session.SessionId, "{ \"pageSize\": 2 }"), HttpStatusCode.BadRequest, "INVALID_ACTION");
+    }
+
     // ---------- שינוי גודל עמוד ----------
 
     [Fact]

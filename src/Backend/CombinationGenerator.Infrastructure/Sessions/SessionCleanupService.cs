@@ -34,10 +34,19 @@ public sealed class SessionCleanupService : BackgroundService
         // מחכים למחזור הבא; כשהשרת נכבה stoppingToken מבוטל והלולאה נגמרת
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            int removed = _store.RemoveExpired();
-            if (removed > 0)
+            try
             {
-                _logger.LogInformation("Removed {Count} expired sessions.", removed);
+                int removed = _store.RemoveExpired();
+                if (removed > 0)
+                {
+                    _logger.LogInformation("Removed {Count} expired sessions.", removed);
+                }
+            }
+            catch (Exception ex)
+            {
+                // ב-.NET 8 חריגה שיוצאת מ-BackgroundService עוצרת את כל השרת.
+                // מעבר אחד שנכשל לא שווה את זה: רושמים ללוג ומנסים שוב במחזור הבא.
+                _logger.LogError(ex, "Session cleanup pass failed; will retry on the next tick.");
             }
         }
     }

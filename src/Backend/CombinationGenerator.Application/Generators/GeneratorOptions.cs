@@ -10,4 +10,7 @@ public sealed class GeneratorOptions
     /// כמה שורות לכל היותר בעמוד. הגבול מגן על השרת: עמוד של מיליון שורות היה תופס זיכרון וזמן.
     /// </summary>
     public int MaxPageSize { get; set; } = 200;
+
+    /// <summary>הגבול חייב להיות לפחות 1.</summary>
+    public bool IsValid => MaxPageSize >= 1;
 }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CombinationGenerator.Api.Contracts;
@@ -41,6 +42,10 @@ internal sealed class GeneratorApi
     /// <summary>"כל הקומבינציות" ודפדוף: POST /api/generators/{id}/all</summary>
     public Task<HttpResponseMessage> AllAsync(Guid id, string action, int pageSize, string? pageNumber = null) =>
         _client.PostAsJsonAsync($"/api/generators/{id}/all", new { action, pageSize, pageNumber });
+
+    /// <summary>"כל הקומבינציות" עם גוף JSON גולמי, לבדיקת קלט שגוי (מספר במקום מילה, שדה חסר).</summary>
+    public Task<HttpResponseMessage> AllRawAsync(Guid id, string json) =>
+        _client.PostAsync($"/api/generators/{id}/all", new StringContent(json, Encoding.UTF8, "application/json"));
 
     /// <summary>"חזור": POST /api/generators/{id}/back</summary>
     public Task<HttpResponseMessage> BackAsync(Guid id) =>

@@ -10,8 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // ============================================================
 builder.Services
     .AddControllers()
-    // enum-ים נשלחים ומתקבלים כטקסט ("Next", "All") ולא כמספרים (0, 1)
-    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    // enum-ים נשלחים ומתקבלים כטקסט ("Next", "All"). מספרים (0, 1, 99) נדחים ב-400:
+    // בלי allowIntegerValues: false, הערך 99 היה עובר והופך לשגיאה פנימית (500)
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));
 
 // שגיאות לא צפויות יוחזרו בפורמט ProblemDetails, כמו כל שאר השגיאות
 builder.Services.AddProblemDetails();
@@ -22,6 +23,12 @@ builder.Services.AddProblemDetails();
 var generatorOptions = builder.Configuration
     .GetSection(GeneratorOptions.SectionName)
     .Get<GeneratorOptions>() ?? new GeneratorOptions();
+
+// הגדרה שגויה מפילה את השרת כבר בעלייה, עם הודעה ברורה, ולא בבקשה הראשונה
+if (!generatorOptions.IsValid)
+{
+    throw new InvalidOperationException($"{GeneratorOptions.SectionName}:MaxPageSize must be at least 1.");
+}
 
 builder.Services.AddSingleton(generatorOptions);
 
