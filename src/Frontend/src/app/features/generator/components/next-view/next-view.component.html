@@ -1,0 +1,15 @@
+<section class="next-view">
+  @if (current(); as item) {
+    <p class="current">
+      קומבינציה מספר <bdi>{{ item.number | groupDigits }}</bdi>:
+      <bdi class="permutation" dir="ltr">[{{ item.permutation.join(', ') }}]</bdi>
+    </p>
+  } @else {
+    <p class="hint">לחצו על "הבא" להצגת הקומבינציה הראשונה.</p>
+  }
+
+  <div class="buttons">
+    <button type="button" [disabled]="disabled()" (click)="nextRequested.emit()">הבא</button>
+    <button type="button" [disabled]="disabled()" (click)="allRequested.emit()">כל הקומבינציות</button>
+  </div>
+</section>

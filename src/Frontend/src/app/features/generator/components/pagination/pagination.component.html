@@ -1,0 +1,46 @@
+<nav class="pagination" aria-label="דפדוף בין דפים">
+  <p class="page-status">
+    דף <bdi>{{ page().pageNumber | groupDigits }}</bdi> מתוך <bdi>{{ page().totalPages | groupDigits }}</bdi>
+  </p>
+
+  <div class="buttons">
+    <button type="button" [disabled]="disabled() || isFirstPage()" (click)="go('First')">ראשון</button>
+    <button type="button" [disabled]="disabled() || isFirstPage()" (click)="go('Previous')">קודם</button>
+
+    @for (link of page().links; track $index) {
+      @if (link.type === 'page') {
+        <button
+          type="button"
+          class="page-link"
+          [class.current]="link.isCurrent"
+          [attr.aria-current]="link.isCurrent ? 'page' : null"
+          [disabled]="disabled() || link.isCurrent"
+          (click)="goToLink(link)">
+          <bdi>{{ link.number | groupDigits }}</bdi>
+        </button>
+      } @else {
+        <span class="ellipsis" aria-label="דפים שהושמטו">…</span>
+      }
+    }
+
+    <button type="button" [disabled]="disabled() || isLastPage()" (click)="go('Next')">הבא</button>
+    <button type="button" [disabled]="disabled() || isLastPage()" (click)="go('Last')">אחרון</button>
+  </div>
+
+  <form class="jump" [formGroup]="jumpForm" (ngSubmit)="submitJump()" novalidate>
+    <label for="jump-page">מספר דף</label>
+    <input
+      id="jump-page"
+      type="text"
+      inputmode="numeric"
+      maxlength="19"
+      dir="ltr"
+      formControlName="pageNumber"
+      [attr.aria-invalid]="showJumpError()"
+      aria-describedby="jump-error" />
+    <button type="submit" [disabled]="disabled()">עבור</button>
+    @if (showJumpError()) {
+      <p id="jump-error" class="field-error">יש להזין מספר דף חיובי.</p>
+    }
+  </form>
+</nav>

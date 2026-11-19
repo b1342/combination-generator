@@ -1,0 +1,53 @@
+<main class="page" [attr.aria-busy]="facade.busy()">
+  <h1>מחולל הקומבינציות</h1>
+
+  @if (facade.error(); as error) {
+    <p class="message error" role="alert">{{ error }}</p>
+  }
+
+  @if (facade.session(); as session) {
+    <section class="summary">
+      <p>מספר איברים: <bdi>{{ session.n }}</bdi></p>
+      <p>
+        סה״כ האפשרויות לסדר <bdi>{{ session.n }}</bdi> מספרים בשורה:
+        <bdi class="total">{{ session.totalCount | groupDigits }}</bdi>
+      </p>
+    </section>
+
+    @if (session.message) {
+      <p class="message info" role="status">{{ session.message }}</p>
+    }
+
+    @if (session.mode === 'Next') {
+      <app-next-view
+        [current]="session.current"
+        [disabled]="facade.busy()"
+        (nextRequested)="facade.next()"
+        (allRequested)="facade.enterAll()" />
+    } @else {
+      @if (session.page; as page) {
+        <app-all-view
+          [page]="page"
+          [disabled]="facade.busy()"
+          (navigateRequested)="facade.navigate($event)"
+          (pageSizeChanged)="facade.changePageSize($event)"
+          (backRequested)="facade.back()" />
+      }
+    }
+
+    <button type="button" class="secondary reset" [disabled]="facade.busy()" (click)="facade.reset()">איפוס</button>
+  } @else if (facade.sessionId()) {
+    <!-- יש id שמור (אחרי רענון), אבל עוד אין מצב מהשרת -->
+    @if (facade.busy()) {
+      <p class="hint" role="status">טוען…</p>
+    } @else {
+      <p class="hint">לא ניתן לטעון את מצב הסשן.</p>
+      <div class="buttons">
+        <button type="button" (click)="facade.reload()">נסה שוב</button>
+        <button type="button" class="secondary" (click)="facade.reset()">איפוס</button>
+      </div>
+    }
+  } @else {
+    <app-start-form [disabled]="facade.busy()" (startRequested)="facade.start($event)" />
+  }
+</main>

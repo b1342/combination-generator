@@ -1,0 +1,162 @@
+/* עיצוב בסיסי לכל האפליקציה. RTL כברירת מחדל (index.html), והתמורות עצמן LTR. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1f2328;
+  background: #f6f7f9;
+}
+
+.page {
+  max-width: 860px;
+  margin: 32px auto;
+  padding: 24px 28px;
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  border-radius: 12px;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 26px;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+button {
+  padding: 6px 14px;
+  border: 1px solid #2f6feb;
+  border-radius: 6px;
+  background: #2f6feb;
+  color: #fff;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #fff;
+  color: #2f6feb;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #9ec0ff;
+  outline-offset: 2px;
+}
+
+input,
+select {
+  padding: 5px 8px;
+  border: 1px solid #c5cbd3;
+  border-radius: 6px;
+}
+
+.buttons,
+.row,
+.toolbar,
+.jump {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.reset {
+  margin-top: 20px;
+}
+
+.message {
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.message.error {
+  background: #fdecec;
+  color: #8a1f1f;
+}
+
+.message.info {
+  background: #e8f1ff;
+  color: #123e86;
+}
+
+.field-error {
+  margin: 4px 0 0;
+  color: #b42318;
+  font-size: 14px;
+}
+
+.hint {
+  color: #59636e;
+}
+
+.total {
+  font-weight: 600;
+}
+
+/* תמורות תמיד משמאל לימין, ובלי לשבור באמצע מספר */
+.permutation {
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+
+/* ב-N=20 שורות ארוכות: גלילה אופקית במקום חיתוך */
+.table-wrap {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #e3e6ea;
+  text-align: start;
+}
+
+th {
+  background: #f1f3f6;
+}
+
+.pagination .page-link.current {
+  background: #123e86;
+  border-color: #123e86;
+  opacity: 1;
+}
+
+.ellipsis {
+  padding: 0 4px;
+  color: #59636e;
+}
+
+.jump {
+  margin-top: 12px;
+}
+
+.jump input {
+  width: 14em;
+}
