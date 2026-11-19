@@ -20,3 +20,6 @@ Thumbs.db
 
 # Assignment and spec documents (kept local, not published)
 אפיונים/
+
+# Local review agents for VS Code Copilot (kept local, not published)
+.github/agents/
