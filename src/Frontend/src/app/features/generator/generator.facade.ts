@@ -65,7 +65,7 @@ export class GeneratorFacade {
       return; // כבר יש Session; מתחילים מחדש רק אחרי איפוס
     }
 
-    this.run(this.api.start(n), session => {
+    this.run(() => this.api.start(n), session => {
       this.adopt(session);
       this.storage.save(session.sessionId);
     });
@@ -115,7 +115,7 @@ export class GeneratorFacade {
       return;
     }
 
-    this.run(this.api.reset(id), () => this.clear(), { recoverOnUnknown: true });
+    this.run(() => this.api.reset(id), () => this.clear(), { recoverOnUnknown: true });
   }
 
   /** טוען מחדש את המצב מהשרת. אחרי רענון דף, אחרי התנגשות, או בלחיצה על "נסה שוב". */
@@ -143,16 +143,21 @@ export class GeneratorFacade {
       return;
     }
 
-    this.run(request(id), session => this.adopt(session), options);
+    this.run(() => request(id), session => this.adopt(session), options);
   }
 
   /**
    * הלב של ה-Facade. כל הבקשות עוברות כאן:
    * 1. אם כבר יש בקשה באוויר, מתעלמים (מונע לחיצה כפולה).
-   * 2. שולחים, עם הגבלת זמן.
+   * 2. רק אז יוצרים את הבקשה ושולחים אותה, עם הגבלת זמן.
    * 3. בהצלחה: onSuccess. בכישלון: handleError.
+   * הבקשה מגיעה כפונקציה (createRequest) ולא כ-Observable מוכן, כדי שבלחיצה כפולה היא לא תיווצר בכלל.
    */
-  private run<T>(request: Observable<T>, onSuccess: (value: T) => void, options: RunOptions = { recoverOnUnknown: false }): void {
+  private run<T>(
+    createRequest: () => Observable<T>,
+    onSuccess: (value: T) => void,
+    options: RunOptions = { recoverOnUnknown: false },
+  ): void {
     if (this._busy()) {
       return;
     }
@@ -160,7 +165,7 @@ export class GeneratorFacade {
     this._busy.set(true);
     this._error.set(null);
 
-    request.pipe(timeout(REQUEST_TIMEOUT_MS), takeUntilDestroyed(this.destroyRef)).subscribe({
+    createRequest().pipe(timeout(REQUEST_TIMEOUT_MS), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: value => {
         this._busy.set(false);
         onSuccess(value);

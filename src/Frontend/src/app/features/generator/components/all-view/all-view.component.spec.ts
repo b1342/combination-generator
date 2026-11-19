@@ -27,8 +27,11 @@ describe('AllViewComponent', () => {
       page({ rows: [combination('2432902008176639801', [20, 19, 18]), combination('2432902008176639802', [20, 18, 19])] }),
     );
 
-    const rows = Array.from(fixture.nativeElement.querySelectorAll('tbody tr')).map(r =>
-      (r as HTMLElement).textContent?.replace(/\s+/g, ' ').trim(),
+    // כל שורה כרשימת תאים: Angular מסיר רווחים בין תגיות, אז קוראים כל תא בנפרד
+    const rows = Array.from(fixture.nativeElement.querySelectorAll('tbody tr')).map(row =>
+      Array.from((row as HTMLElement).querySelectorAll('td'))
+        .map(cell => cell.textContent?.trim())
+        .join(' '),
     );
     expect(rows).toEqual(['2,432,902,008,176,639,801 [20, 19, 18]', '2,432,902,008,176,639,802 [20, 18, 19]']);
   });
