@@ -95,6 +95,48 @@ public class GeneratorSessionTests
         Assert.Equal(DomainError.InvalidMode, Rejected(all.AdvanceNext()));
     }
 
+    // ---------- "הקודם" ----------
+
+    [Fact]
+    public void Previous_GoesBackOneCombination()
+    {
+        var session = AfterNext(GeneratorSession.Create(3), 3);   // מספר 3: [2,1,3]
+
+        session = Changed(session.MoveToPrevious());
+
+        Assert.Equal(1, CursorOf(session).Index);                 // מספר 2
+        Assert.Equal(new[] { 1, 3, 2 }, CursorOf(session).Permutation);
+    }
+
+    [Fact]
+    public void Previous_AtFirstOrBeforeAnyNext_IsRejected()
+    {
+        var start = GeneratorSession.Create(3);
+        var first = AfterNext(start, 1);
+
+        Assert.Equal(DomainError.NoPreviousCombination, Rejected(start.MoveToPrevious()));
+        Assert.Equal(DomainError.NoPreviousCombination, Rejected(first.MoveToPrevious()));
+    }
+
+    [Fact]
+    public void Previous_InAllMode_IsRejected()
+    {
+        var all = Changed(GeneratorSession.Create(3).ShowAll(Nav(PageNavigation.First, 2)));
+
+        Assert.Equal(DomainError.InvalidMode, Rejected(all.MoveToPrevious()));
+    }
+
+    [Fact]
+    public void EnterAll_AfterPrevious_StartsAfterTheCombinationOnScreen()
+    {
+        var session = AfterNext(GeneratorSession.Create(3), 4);   // מספר 4
+        session = Changed(session.MoveToPrevious());               // מספר 3
+
+        var all = AllOf(Changed(session.ShowAll(Nav(PageNavigation.First, 2))));
+
+        Assert.Equal(3, all.StartIndex);                           // מתחיל ממספר 4
+    }
+
     // ---------- כניסה ל"כל הקומבינציות" ----------
 
     [Fact]

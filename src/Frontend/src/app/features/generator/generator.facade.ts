@@ -71,6 +71,11 @@ export class GeneratorFacade {
     this.withSession(id => this.api.next(id));
   }
 
+  /** "הקודם". */
+  previous(): void {
+    this.withSession(id => this.api.previous(id));
+  }
+
   /** "כל הקומבינציות": הכניסה היא תמיד לדף הראשון. */
   enterAll(): void {
     this.withSession(id => this.api.showAll(id, { action: 'First', pageSize: this._preferredPageSize() }));

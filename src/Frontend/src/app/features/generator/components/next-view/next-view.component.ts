@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CombinationDto } from '../../data-access/generator-api.models';
 import { GroupDigitsPipe } from '../../presentation/group-digits.pipe';
 
-/** מסך "הבא": הקומבינציה הנוכחית, וכפתורי "הבא" ו"כל הקומבינציות". */
+/** מסך "הבא": הקומבינציה הנוכחית, וכפתורי "הקודם", "הבא" ו"כל הקומבינציות". */
 @Component({
   selector: 'app-next-view',
   imports: [GroupDigitsPipe],
@@ -14,6 +14,13 @@ export class NextViewComponent {
   readonly current = input<CombinationDto | null>(null);
   readonly disabled = input(false);
 
+  /** אין "הקודם" לפני הקומבינציה הראשונה. השוואת טקסט בלבד, בלי חשבון. */
+  readonly hasPrevious = computed(() => {
+    const current = this.current();
+    return current !== null && current.number !== '1';
+  });
+
+  readonly previousRequested = output<void>();
   readonly nextRequested = output<void>();
   readonly allRequested = output<void>();
 }

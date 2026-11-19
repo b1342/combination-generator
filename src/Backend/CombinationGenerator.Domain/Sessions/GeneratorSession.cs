@@ -89,6 +89,36 @@ public sealed class GeneratorSession
         return ChangeTo(new NextProgress(Cursor.Create(next.Cursor.Index + 1, working)));
     }
 
+    // ---------- "הקודם" ----------
+
+    /// <summary>
+    /// "הקודם": חוזרים קומבינציה אחת אחורה, עם PreviousPermutation.
+    /// לפני הקומבינציה הראשונה, או כשעוד לא הוצגה אף אחת, נדחה.
+    /// </summary>
+    public DomainTransition MoveToPrevious()
+    {
+        if (Progress is not NextProgress next)
+        {
+            return Reject(DomainError.InvalidMode);
+        }
+
+        if (next.Cursor is null || next.Cursor.Index == 0)
+        {
+            return Reject(DomainError.NoPreviousCombination);
+        }
+
+        // עותק עבודה, בדיוק כמו ב"הבא": המצב השמור חייב להישאר כמו שהוא
+        int[] working = next.Cursor.Permutation.ToArray();
+
+        if (!PreviousPermutation.TryRetreat(working))
+        {
+            // לא אמור לקרות: לכל אינדקס גדול מ-0 יש תמורה קודמת
+            throw new InvalidOperationException("A permutation after the first must have a previous one.");
+        }
+
+        return ChangeTo(new NextProgress(Cursor.Create(next.Cursor.Index - 1, working)));
+    }
+
     // ---------- "כל הקומבינציות" ----------
 
     /// <summary>

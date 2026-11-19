@@ -22,6 +22,7 @@
       <app-next-view
         [current]="session.current"
         [disabled]="facade.busy()"
+        (previousRequested)="facade.previous()"
         (nextRequested)="facade.next()"
         (allRequested)="facade.enterAll()" />
     } @else {

@@ -88,6 +88,32 @@ public class StartAndNextTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(new[] { 3, 2, 1 }, current.Permutation);
     }
 
+    // ---------- "הקודם" ----------
+
+    [Fact]
+    public async Task Previous_GoesBackOneCombination()
+    {
+        SessionResponse session = await _api.StartOkAsync(3);
+        await _api.NextTimesAsync(session.SessionId, 3);
+
+        using HttpResponseMessage response = await _api.PreviousAsync(session.SessionId);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        CombinationResponse current = GeneratorApi.RequireCurrent(await GeneratorApi.ReadSessionAsync(response));
+
+        Assert.Equal("2", current.Number);
+        Assert.Equal(new[] { 1, 3, 2 }, current.Permutation);
+    }
+
+    [Fact]
+    public async Task Previous_AtFirstCombination_Returns409()
+    {
+        SessionResponse session = await _api.StartOkAsync(3);
+        await _api.NextOkAsync(session.SessionId);
+
+        await GeneratorApi.AssertProblemAsync(
+            await _api.PreviousAsync(session.SessionId), HttpStatusCode.Conflict, "NO_PREVIOUS_COMBINATION");
+    }
+
     // ---------- קריאת המצב ----------
 
     [Fact]

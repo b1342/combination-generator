@@ -85,6 +85,7 @@ public class SessionLifecycleTests : IClassFixture<WebApplicationFactory<Program
         Assert.Contains("\"/api/generators\"", document);
         Assert.Contains("\"/api/generators/{id}\"", document);
         Assert.Contains("\"/api/generators/{id}/next\"", document);
+        Assert.Contains("\"/api/generators/{id}/previous\"", document);
         Assert.Contains("\"/api/generators/{id}/all\"", document);
         Assert.Contains("\"/api/generators/{id}/back\"", document);
     }

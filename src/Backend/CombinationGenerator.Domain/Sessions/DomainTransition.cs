@@ -41,4 +41,7 @@ public enum DomainError
 
     /// <summary>מספר דף שלא קיים.</summary>
     InvalidPageNumber,
+
+    /// <summary>"הקודם" על הקומבינציה הראשונה, או לפני שהוצגה אף אחת.</summary>
+    NoPreviousCombination,
 }

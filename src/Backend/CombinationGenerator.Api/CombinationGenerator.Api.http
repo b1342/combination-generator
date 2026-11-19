@@ -14,6 +14,9 @@ Content-Type: application/json
 ### הבא (GetNextAPI)
 POST {{baseUrl}}/api/generators/{{id}}/next
 
+### הקודם
+POST {{baseUrl}}/api/generators/{{id}}/previous
+
 ### כל הקומבינציות (GetAllAPI) — כניסה, 2 בעמוד
 POST {{baseUrl}}/api/generators/{{id}}/all
 Content-Type: application/json

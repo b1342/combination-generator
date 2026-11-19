@@ -9,6 +9,7 @@
   }
 
   <div class="buttons">
+    <button type="button" class="secondary" [disabled]="disabled() || !hasPrevious()" (click)="previousRequested.emit()">הקודם</button>
     <button type="button" [disabled]="disabled()" (click)="nextRequested.emit()">הבא</button>
     <button type="button" [disabled]="disabled()" (click)="allRequested.emit()">כל הקומבינציות</button>
   </div>

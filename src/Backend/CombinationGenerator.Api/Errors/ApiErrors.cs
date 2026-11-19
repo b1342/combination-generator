@@ -48,6 +48,9 @@ internal static class ApiErrors
         OperationStatus.NoPreviousPage =>
             new(StatusCodes.Status409Conflict, "NO_PREVIOUS_PAGE", "No previous page", "זה כבר הדף הראשון."),
 
+        OperationStatus.NoPreviousCombination =>
+            new(StatusCodes.Status409Conflict, "NO_PREVIOUS_COMBINATION", "No previous combination", "זו כבר הקומבינציה הראשונה."),
+
         OperationStatus.NoNextPage =>
             new(StatusCodes.Status409Conflict, "NO_NEXT_PAGE", "No next page", "זה כבר הדף האחרון."),
 

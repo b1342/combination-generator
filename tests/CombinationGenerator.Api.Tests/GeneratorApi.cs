@@ -39,6 +39,10 @@ internal sealed class GeneratorApi
     public Task<HttpResponseMessage> NextAsync(Guid id) =>
         _client.PostAsync($"/api/generators/{id}/next", content: null);
 
+    /// <summary>"הקודם": POST /api/generators/{id}/previous</summary>
+    public Task<HttpResponseMessage> PreviousAsync(Guid id) =>
+        _client.PostAsync($"/api/generators/{id}/previous", content: null);
+
     /// <summary>"כל הקומבינציות" ודפדוף: POST /api/generators/{id}/all</summary>
     public Task<HttpResponseMessage> AllAsync(Guid id, string action, int pageSize, string? pageNumber = null) =>
         _client.PostAsJsonAsync($"/api/generators/{id}/all", new { action, pageSize, pageNumber });

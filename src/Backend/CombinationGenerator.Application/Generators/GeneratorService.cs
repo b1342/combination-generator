@@ -59,6 +59,10 @@ public sealed class GeneratorService
     public Task<OperationResult> NextAsync(Guid sessionId, CancellationToken cancellationToken = default) =>
         ApplyAsync(sessionId, session => session.AdvanceNext(), cancellationToken);
 
+    /// <summary>"הקודם": הקומבינציה הקודמת.</summary>
+    public Task<OperationResult> PreviousAsync(Guid sessionId, CancellationToken cancellationToken = default) =>
+        ApplyAsync(sessionId, session => session.MoveToPrevious(), cancellationToken);
+
     /// <summary>"כל הקומבינציות", כל כפתורי הדפדוף ושינוי גודל העמוד.</summary>
     public Task<OperationResult> ShowAllAsync(
         Guid sessionId,
@@ -202,6 +206,7 @@ public sealed class GeneratorService
         DomainError.NoPreviousPage => OperationStatus.NoPreviousPage,
         DomainError.NoNextPage => OperationStatus.NoNextPage,
         DomainError.InvalidPageNumber => OperationStatus.InvalidPageNumber,
+        DomainError.NoPreviousCombination => OperationStatus.NoPreviousCombination,
         _ => throw new ArgumentOutOfRangeException(nameof(error), error, "Unknown domain error."),
     };
 }

@@ -28,6 +28,11 @@ export class GeneratorApiService {
     return this.http.post<SessionDto>(`${this.sessionUrl(sessionId)}/next`, null);
   }
 
+  /** "הקודם": POST /api/generators/{id}/previous */
+  previous(sessionId: string): Observable<SessionDto> {
+    return this.http.post<SessionDto>(`${this.sessionUrl(sessionId)}/previous`, null);
+  }
+
   /** "כל הקומבינציות", דפדוף ושינוי גודל עמוד: POST /api/generators/{id}/all */
   showAll(sessionId: string, request: ShowAllRequestDto): Observable<SessionDto> {
     return this.http.post<SessionDto>(`${this.sessionUrl(sessionId)}/all`, request);

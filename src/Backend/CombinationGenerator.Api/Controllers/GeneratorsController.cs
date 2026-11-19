@@ -59,6 +59,14 @@ public sealed class GeneratorsController : ControllerBase
     public async Task<IActionResult> Next(Guid id, CancellationToken cancellationToken) =>
         ToActionResult(await _service.NextAsync(id, cancellationToken));
 
+    /// <summary>"הקודם": הקומבינציה הקודמת. POST /api/generators/{id}/previous</summary>
+    [HttpPost("{id:guid}/previous")]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Previous(Guid id, CancellationToken cancellationToken) =>
+        ToActionResult(await _service.PreviousAsync(id, cancellationToken));
+
     /// <summary>
     /// GetAllAPI — "כל הקומבינציות", כפתורי הדפדוף ושינוי גודל עמוד.
     /// POST /api/generators/{id}/all  גוף: { "action": "Next", "pageSize": 20, "pageNumber": "7" }

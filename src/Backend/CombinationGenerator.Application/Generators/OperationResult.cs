@@ -40,6 +40,9 @@ public enum OperationStatus
 
     /// <summary>מספר דף שלא קיים.</summary>
     InvalidPageNumber,
+
+    /// <summary>"הקודם" על הקומבינציה הראשונה.</summary>
+    NoPreviousCombination,
 }
 
 /// <summary>התוצאה של כל פעולה ב-Service.</summary>
