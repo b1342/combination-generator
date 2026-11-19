@@ -1,16 +1,19 @@
-<section class="next-view">
+<section class="card next-view">
   @if (current(); as item) {
-    <p class="current">
-      קומבינציה מספר <bdi>{{ item.number | groupDigits }}</bdi>:
-      <bdi class="permutation" dir="ltr">[{{ item.permutation.join(', ') }}]</bdi>
-    </p>
+    <p class="eyebrow">קומבינציה מספר <bdi>{{ item.number | groupDigits }}</bdi></p>
+    <ol class="tiles" dir="ltr" [attr.aria-label]="'[' + item.permutation.join(', ') + ']'">
+      @for (value of item.permutation; track $index) {
+        <li class="tile">{{ value }}</li>
+      }
+    </ol>
   } @else {
-    <p class="hint">לחצו על "הבא" להצגת הקומבינציה הראשונה.</p>
+    <p class="eyebrow">עוד לא הוצגה קומבינציה</p>
+    <p class="muted">לחצו על "הבא" להצגת הקומבינציה הראשונה.</p>
   }
 
-  <div class="buttons">
-    <button type="button" class="secondary" [disabled]="disabled() || !hasPrevious()" (click)="previousRequested.emit()">הקודם</button>
-    <button type="button" [disabled]="disabled()" (click)="nextRequested.emit()">הבא</button>
-    <button type="button" [disabled]="disabled()" (click)="allRequested.emit()">כל הקומבינציות</button>
+  <div class="actions">
+    <button type="button" class="btn btn-secondary" [disabled]="disabled() || !hasPrevious()" (click)="previousRequested.emit()">הקודם</button>
+    <button type="button" class="btn btn-primary" [disabled]="disabled()" (click)="nextRequested.emit()">הבא</button>
+    <button type="button" class="btn btn-outline" [disabled]="disabled()" (click)="allRequested.emit()">כל הקומבינציות</button>
   </div>
 </section>

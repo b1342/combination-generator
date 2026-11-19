@@ -1,15 +1,19 @@
-<section class="all-view">
-  <h2>כל הקומבינציות</h2>
-
-  <div class="toolbar">
-    <label for="page-size">שורות בעמוד</label>
-    <select id="page-size" [disabled]="disabled()" (change)="onPageSizeChange($event)">
-      @for (size of pageSizes(); track size) {
-        <option [value]="size" [selected]="size === page().pageSize">{{ size }}</option>
-      }
-    </select>
-    <button type="button" class="secondary" [disabled]="disabled()" (click)="backRequested.emit()">חזור</button>
+<section class="card all-view">
+  <div class="card-header">
+    <h2>כל הקומבינציות</h2>
+    <div class="toolbar">
+      <label class="inline-label" for="page-size">שורות בעמוד</label>
+      <select id="page-size" class="input" [disabled]="disabled()" (change)="onPageSizeChange($event)">
+        @for (size of pageSizes(); track size) {
+          <option [value]="size" [selected]="size === page().pageSize">{{ size }}</option>
+        }
+      </select>
+      <button type="button" class="btn btn-secondary" [disabled]="disabled()" (click)="backRequested.emit()">חזור</button>
+    </div>
   </div>
+
+  <!-- הדפדוף למעלה, והטבלה נגללת בתוך המסגרת שלה -->
+  <app-pagination [page]="page()" [disabled]="disabled()" (navigateRequested)="navigateRequested.emit($event)" />
 
   <div class="table-wrap">
     <table>
@@ -22,13 +26,11 @@
       <tbody>
         @for (row of page().rows; track row.number) {
           <tr>
-            <td><bdi>{{ row.number | groupDigits }}</bdi></td>
+            <td class="num"><bdi>{{ row.number | groupDigits }}</bdi></td>
             <td><bdi class="permutation" dir="ltr">[{{ row.permutation.join(', ') }}]</bdi></td>
           </tr>
         }
       </tbody>
     </table>
   </div>
-
-  <app-pagination [page]="page()" [disabled]="disabled()" (navigateRequested)="navigateRequested.emit($event)" />
 </section>

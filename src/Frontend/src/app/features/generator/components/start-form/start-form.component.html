@@ -1,16 +1,21 @@
-<form class="start-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-  <label for="n">מספר האיברים (1–20)</label>
-  <div class="row">
+<form class="card start-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <h2>כמה מספרים לסדר?</h2>
+  <p class="muted">המערכת תחשב את כל הסידורים האפשריים שלהם בשורה.</p>
+
+  <label class="field-label" for="n">מספר האיברים (1–20)</label>
+  <div class="field-row">
     <input
       id="n"
+      class="input input-lg"
       type="number"
       min="1"
       max="20"
       step="1"
+      placeholder="למשל 3"
       formControlName="n"
       [attr.aria-invalid]="showError()"
       aria-describedby="n-error" />
-    <button type="submit" [disabled]="disabled()">התחל</button>
+    <button type="submit" class="btn btn-primary btn-lg" [disabled]="disabled()">התחל</button>
   </div>
   @if (showError()) {
     <p id="n-error" class="field-error">יש להזין מספר שלם בין 1 ל-20.</p>

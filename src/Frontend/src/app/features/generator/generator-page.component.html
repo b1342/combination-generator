@@ -1,54 +1,67 @@
-<main class="page" [attr.aria-busy]="facade.busy()">
-  <h1>מחולל הקומבינציות</h1>
+<div class="app">
+  <!-- פס התקדמות דק בראש המסך, בזמן שבקשה באוויר -->
+  <div class="progress" [class.active]="facade.busy()" aria-hidden="true"></div>
 
-  @if (facade.error(); as error) {
-    <p class="message error" role="alert">{{ error }}</p>
-  }
+  <header class="app-header">
+    <div class="brand">
+      <h1>מחולל הקומבינציות</h1>
+      <p class="subtitle">כל הסידורים האפשריים של n מספרים בשורה</p>
+    </div>
+    @if (facade.sessionId()) {
+      <button type="button" class="btn btn-ghost" [disabled]="facade.busy()" (click)="facade.reset()">איפוס</button>
+    }
+  </header>
 
-  @if (facade.session(); as session) {
-    <section class="summary">
-      <p>מספר איברים: <bdi>{{ session.n }}</bdi></p>
-      <p>
-        סה״כ האפשרויות לסדר <bdi>{{ session.n }}</bdi> מספרים בשורה:
-        <bdi class="total">{{ session.totalCount | groupDigits }}</bdi>
-      </p>
-    </section>
-
-    @if (session.message) {
-      <p class="message info" role="status">{{ session.message }}</p>
+  <main class="content" [attr.aria-busy]="facade.busy()">
+    @if (facade.error(); as error) {
+      <p class="alert alert-error" role="alert">{{ error }}</p>
     }
 
-    @if (session.mode === 'Next') {
-      <app-next-view
-        [current]="session.current"
-        [disabled]="facade.busy()"
-        (previousRequested)="facade.previous()"
-        (nextRequested)="facade.next()"
-        (allRequested)="facade.enterAll()" />
-    } @else {
-      @if (session.page; as page) {
-        <app-all-view
-          [page]="page"
-          [disabled]="facade.busy()"
-          (navigateRequested)="facade.navigate($event)"
-          (pageSizeChanged)="facade.changePageSize($event)"
-          (backRequested)="facade.back()" />
+    @if (facade.session(); as session) {
+      <section class="stats">
+        <div class="stat">
+          <span class="stat-label">מספר איברים</span>
+          <span class="stat-value"><bdi>{{ session.n }}</bdi></span>
+        </div>
+        <div class="stat stat-wide">
+          <span class="stat-label">סה״כ האפשרויות לסדר <bdi>{{ session.n }}</bdi> מספרים בשורה</span>
+          <span class="stat-value"><bdi>{{ session.totalCount | groupDigits }}</bdi></span>
+        </div>
+      </section>
+
+      @if (session.message) {
+        <p class="alert alert-info" role="status">{{ session.message }}</p>
       }
-    }
 
-    <button type="button" class="secondary reset" [disabled]="facade.busy()" (click)="facade.reset()">איפוס</button>
-  } @else if (facade.sessionId()) {
-    <!-- יש id שמור (אחרי רענון), אבל עוד אין מצב מהשרת -->
-    @if (facade.busy()) {
-      <p class="hint" role="status">טוען…</p>
+      @if (session.mode === 'Next') {
+        <app-next-view
+          [current]="session.current"
+          [disabled]="facade.busy()"
+          (previousRequested)="facade.previous()"
+          (nextRequested)="facade.next()"
+          (allRequested)="facade.enterAll()" />
+      } @else {
+        @if (session.page; as page) {
+          <app-all-view
+            [page]="page"
+            [disabled]="facade.busy()"
+            (navigateRequested)="facade.navigate($event)"
+            (pageSizeChanged)="facade.changePageSize($event)"
+            (backRequested)="facade.back()" />
+        }
+      }
+    } @else if (facade.sessionId()) {
+      <!-- יש id שמור (אחרי רענון), אבל עוד אין מצב מהשרת -->
+      <section class="card empty-state">
+        @if (facade.busy()) {
+          <p class="muted" role="status">טוען…</p>
+        } @else {
+          <p>לא ניתן לטעון את מצב הסשן.</p>
+          <button type="button" class="btn btn-primary" (click)="facade.reload()">נסה שוב</button>
+        }
+      </section>
     } @else {
-      <p class="hint">לא ניתן לטעון את מצב הסשן.</p>
-      <div class="buttons">
-        <button type="button" (click)="facade.reload()">נסה שוב</button>
-        <button type="button" class="secondary" (click)="facade.reset()">איפוס</button>
-      </div>
+      <app-start-form [disabled]="facade.busy()" (startRequested)="facade.start($event)" />
     }
-  } @else {
-    <app-start-form [disabled]="facade.busy()" (startRequested)="facade.start($event)" />
-  }
-</main>
+  </main>
+</div>
