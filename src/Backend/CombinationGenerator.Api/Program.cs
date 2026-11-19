@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using CombinationGenerator.Api.Errors;
 using CombinationGenerator.Application.Generators;
 using CombinationGenerator.Infrastructure;
 using Microsoft.OpenApi.Models;
@@ -12,7 +13,10 @@ builder.Services
     .AddControllers()
     // enum-ים נשלחים ומתקבלים כטקסט ("Next", "All"). מספרים (0, 1, 99) נדחים ב-400:
     // בלי allowIntegerValues: false, הערך 99 היה עובר והופך לשגיאה פנימית (500)
-    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)))
+    // גוף בקשה שלא נקרא (JSON שבור, סוג לא נכון): אותו פורמט ואותו שדה "code" כמו כל שאר השגיאות,
+    // ובלי לחשוף שמות של מחלקות פנימיות כמו בתשובת ברירת המחדל
+    .ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = _ => ApiErrors.ToResult(ApiErrors.InvalidRequest));
 
 // שגיאות לא צפויות יוחזרו בפורמט ProblemDetails, כמו כל שאר השגיאות
 builder.Services.AddProblemDetails();

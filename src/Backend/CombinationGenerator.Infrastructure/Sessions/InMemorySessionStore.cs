@@ -72,12 +72,12 @@ public sealed class InMemorySessionStore : ISessionStore
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // TryGetLive גם "נוגע" ב-Session: השעון שלו מתאפס
         if (!TryGetLive(id, out Entry? entry))
         {
             return Task.FromResult<StoredSession?>(null);
         }
 
-        entry.Touch(_time.GetUtcNow()); // נגעו בו: השעון מתאפס
         return Task.FromResult<StoredSession?>(entry.Value);
     }
 
@@ -128,8 +128,10 @@ public sealed class InMemorySessionStore : ISessionStore
 
         foreach (KeyValuePair<Guid, Entry> pair in _entries)
         {
-            // מוחקים רק אם הערך עדיין אותו Entry שבדקנו: אם הוחלף בינתיים, הוא חדש ולא פג
-            if (IsExpired(pair.Value, now) && _entries.TryRemove(pair))
+            // שני תנאים, כדי שלא נמחק Session שמישהו נגע בו ממש עכשיו:
+            // TryClaimExpired מסמן אותו "מת" רק אם לא נגעו בו מאז שנמצא פג (CAS על זמן הגישה),
+            // ו-TryRemove(pair) מוחק רק אם הערך הוא עדיין אותו Entry (לא הוחלף בינתיים)
+            if (pair.Value.TryClaimExpired(now, _options.IdleTimeout) && _entries.TryRemove(pair))
             {
                 removed++;
             }
@@ -138,7 +140,10 @@ public sealed class InMemorySessionStore : ISessionStore
         return removed;
     }
 
-    /// <summary>מוצא Session שלא פג. Session שפג נמחק בהזדמנות ומדווח כלא קיים.</summary>
+    /// <summary>
+    /// מוצא Session חי ו"נוגע" בו (מאפס את השעון), בצעד אטומי אחד.
+    /// Session שפג, או שהמנקה כבר סימן למחיקה, מדווח כלא קיים ונמחק בהזדמנות.
+    /// </summary>
     private bool TryGetLive(Guid id, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entry? entry)
     {
         if (!_entries.TryGetValue(id, out entry))
@@ -146,9 +151,14 @@ public sealed class InMemorySessionStore : ISessionStore
             return false;
         }
 
-        if (IsExpired(entry, _time.GetUtcNow()))
+        DateTimeOffset now = _time.GetUtcNow();
+        if (!entry.TryTouch(now, _options.IdleTimeout))
         {
-            _entries.TryRemove(new KeyValuePair<Guid, Entry>(id, entry));
+            if (entry.TryClaimExpired(now, _options.IdleTimeout))
+            {
+                _entries.TryRemove(new KeyValuePair<Guid, Entry>(id, entry));
+            }
+
             entry = null;
             return false;
         }
@@ -156,15 +166,19 @@ public sealed class InMemorySessionStore : ISessionStore
         return true;
     }
 
-    private bool IsExpired(Entry entry, DateTimeOffset now) =>
-        now - entry.LastAccess >= _options.IdleTimeout;
-
     /// <summary>
     /// רשומה במגירה: ה-Session השמור, ומתי נגעו בו לאחרונה.
     /// הזמן נשמר בנפרד מ-StoredSession כדי שקריאה (שמאפסת את השעון) לא תיחשב "שינוי" ולא תפריע ל-TryUpdate.
     /// </summary>
+    /// <remarks>
+    /// הנגיעה והמחיקה מתחרות על אותו שדה, _lastAccessTicks, ושתיהן משנות אותו רק ב-CompareExchange.
+    /// לכן תמיד רק אחת מנצחת: או שהבקשה נגעה והמנקה מוותר, או שהמנקה סימן "מת" והבקשה מקבלת "לא קיים".
+    /// </remarks>
     private sealed class Entry
     {
+        /// <summary>ערך מיוחד: המנקה תפס את הרשומה למחיקה. אי אפשר יותר לנגוע בה.</summary>
+        private const long Claimed = long.MinValue;
+
         private long _lastAccessTicks;
 
         public Entry(StoredSession value, DateTimeOffset lastAccess)
@@ -175,9 +189,48 @@ public sealed class InMemorySessionStore : ISessionStore
 
         public StoredSession Value { get; }
 
-        // Interlocked: קריאה וכתיבה של long בטוחות גם כששתי בקשות נוגעות בו יחד
-        public DateTimeOffset LastAccess => new(Interlocked.Read(ref _lastAccessTicks), TimeSpan.Zero);
+        /// <summary>
+        /// מאפס את השעון ומחזיר true, אם הרשומה עדיין חיה. אם פגה או נתפסה למחיקה, מחזיר false.
+        /// הזמן רק מתקדם: נגיעה עם זמן ישן לא דורסת נגיעה חדשה יותר.
+        /// </summary>
+        public bool TryTouch(DateTimeOffset now, TimeSpan idleTimeout)
+        {
+            long nowTicks = now.UtcTicks;
+            while (true)
+            {
+                long seen = Interlocked.Read(ref _lastAccessTicks);
+                if (seen == Claimed || nowTicks - seen >= idleTimeout.Ticks)
+                {
+                    return false;
+                }
 
-        public void Touch(DateTimeOffset now) => Interlocked.Exchange(ref _lastAccessTicks, now.UtcTicks);
+                if (seen >= nowTicks || Interlocked.CompareExchange(ref _lastAccessTicks, nowTicks, seen) == seen)
+                {
+                    return true;
+                }
+
+                // מישהו אחר נגע בדיוק עכשיו: מנסים שוב עם הערך החדש
+            }
+        }
+
+        /// <summary>
+        /// מסמן את הרשומה "מתה" ומחזיר true, רק אם היא פגה ואף אחד לא נגע בה מאז שנבדקה.
+        /// אם כבר סומנה קודם, גם מחזיר true (אפשר למחוק).
+        /// </summary>
+        public bool TryClaimExpired(DateTimeOffset now, TimeSpan idleTimeout)
+        {
+            long seen = Interlocked.Read(ref _lastAccessTicks);
+            if (seen == Claimed)
+            {
+                return true;
+            }
+
+            if (now.UtcTicks - seen < idleTimeout.Ticks)
+            {
+                return false;
+            }
+
+            return Interlocked.CompareExchange(ref _lastAccessTicks, Claimed, seen) == seen;
+        }
     }
 }

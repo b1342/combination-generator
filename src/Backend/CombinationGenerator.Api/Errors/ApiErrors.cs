@@ -1,4 +1,5 @@
 using CombinationGenerator.Application.Generators;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CombinationGenerator.Api.Errors;
 
@@ -18,6 +19,31 @@ internal static class ApiErrors
     /// </summary>
     public static readonly ApiError InvalidAction =
         new(StatusCodes.Status400BadRequest, "INVALID_ACTION", "Invalid action", "הפעולה חייבת להיות אחת מ: First, Previous, Next, Last, Specific, Current.");
+
+    /// <summary>גוף הבקשה לא נקרא בכלל: JSON שבור, או ערך מסוג לא נכון (למשל "action": 99 או "Jump").</summary>
+    public static readonly ApiError InvalidRequest =
+        new(StatusCodes.Status400BadRequest, "INVALID_REQUEST", "Invalid request", "גוף הבקשה אינו תקין.");
+
+    /// <summary>
+    /// השגיאה בפורמט הסטנדרטי ProblemDetails, עם שדה "code" שהלקוח יכול לבדוק.
+    /// משמש גם את ה-Controller וגם את Program.cs (לגוף בקשה שלא נקרא), כדי שכל השגיאות ייראו אותו דבר.
+    /// </summary>
+    public static ObjectResult ToResult(ApiError error)
+    {
+        var problem = new ProblemDetails
+        {
+            Status = error.StatusCode,
+            Title = error.Title,
+            Detail = error.Message,
+        };
+        problem.Extensions["code"] = error.Code;
+
+        return new ObjectResult(problem)
+        {
+            StatusCode = error.StatusCode,
+            ContentTypes = { "application/problem+json" },
+        };
+    }
 
     public static ApiError For(OperationStatus status) => status switch
     {

@@ -14,7 +14,7 @@
       placeholder="למשל 3"
       formControlName="n"
       [attr.aria-invalid]="showError()"
-      aria-describedby="n-error" />
+      [attr.aria-describedby]="showError() ? 'n-error' : null" />
     <button type="submit" class="btn btn-primary btn-lg" [disabled]="disabled()">התחל</button>
   </div>
   @if (showError()) {

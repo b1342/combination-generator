@@ -145,8 +145,8 @@ public class AllCombinationsTests : IClassFixture<WebApplicationFactory<Program>
         SessionResponse session = await _api.StartOkAsync(3);
 
         // "Jump" הוא לא ערך של PageNavigation, ולכן ASP.NET דוחה את הגוף עוד לפני ה-Controller
-        using HttpResponseMessage response = await _api.AllAsync(session.SessionId, "Jump", 2);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await GeneratorApi.AssertProblemAsync(
+            await _api.AllAsync(session.SessionId, "Jump", 2), HttpStatusCode.BadRequest, "INVALID_REQUEST");
     }
 
     [Theory]
@@ -157,10 +157,10 @@ public class AllCombinationsTests : IClassFixture<WebApplicationFactory<Program>
         SessionResponse session = await _api.StartOkAsync(3);
         await _api.AllOkAsync(session.SessionId, "First", 2);          // במצב All, שם 99 היה מגיע ל-throw
 
-        using HttpResponseMessage response =
-            await _api.AllRawAsync(session.SessionId, $"{{ \"action\": {number}, \"pageSize\": 2 }}");
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await GeneratorApi.AssertProblemAsync(
+            await _api.AllRawAsync(session.SessionId, $"{{ \"action\": {number}, \"pageSize\": 2 }}"),
+            HttpStatusCode.BadRequest,
+            "INVALID_REQUEST");
     }
 
     [Fact]

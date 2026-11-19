@@ -14,6 +14,8 @@ namespace CombinationGenerator.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/generators")]
+// מצב של Session משתנה בכל לחיצה: אסור לדפדפן או לפרוקסי לשמור עותק ולהחזיר אותו במקום לשאול את השרת
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class GeneratorsController : ControllerBase
 {
     private readonly GeneratorService _service;
@@ -135,23 +137,6 @@ public sealed class GeneratorsController : ControllerBase
         _ => ErrorResponse(ApiErrors.For(result.Status)),
     };
 
-    /// <summary>
-    /// שגיאה בפורמט הסטנדרטי ProblemDetails, עם שדה "code" שהלקוח יכול לבדוק.
-    /// </summary>
-    private static ObjectResult ErrorResponse(ApiError error)
-    {
-        var problem = new ProblemDetails
-        {
-            Status = error.StatusCode,
-            Title = error.Title,
-            Detail = error.Message,
-        };
-        problem.Extensions["code"] = error.Code;
-
-        return new ObjectResult(problem)
-        {
-            StatusCode = error.StatusCode,
-            ContentTypes = { "application/problem+json" },
-        };
-    }
+    /// <summary>שגיאה בפורמט ProblemDetails, עם שדה "code". הבנייה עצמה ב-ApiErrors.ToResult.</summary>
+    private static ObjectResult ErrorResponse(ApiError error) => ApiErrors.ToResult(error);
 }

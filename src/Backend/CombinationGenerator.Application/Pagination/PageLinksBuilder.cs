@@ -29,11 +29,16 @@ public static class PageLinksBuilder
 
         // 1. אוספים את הדפים שחייבים להופיע. SortedSet ממיין ומונע כפילויות.
         var pages = new SortedSet<long> { 1, totalPages };
-        for (long page = currentPage - NeighborPages; page <= currentPage + NeighborPages; page++)
+
+        // הגבולות מחושבים כך שאין חיבור שעלול לעבור את long.MaxValue
+        long from = Math.Max(1, currentPage - NeighborPages);
+        long to = currentPage > totalPages - NeighborPages ? totalPages : currentPage + NeighborPages;
+        for (long page = from; page <= to; page++)
         {
-            if (page >= 1 && page <= totalPages)
+            pages.Add(page);
+            if (page == to)
             {
-                pages.Add(page);
+                break; // בלי זה, page++ אחרי long.MaxValue היה גולש למספר שלילי
             }
         }
 

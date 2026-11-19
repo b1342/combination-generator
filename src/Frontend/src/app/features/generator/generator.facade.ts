@@ -1,11 +1,16 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
+import { Observable, timeout } from 'rxjs';
 import { GeneratorApiService } from './data-access/generator-api.service';
 import { PageAction, PageNavigation, SessionDto } from './data-access/generator-api.models';
 import { toUiError } from './data-access/generator-errors';
 import { SessionIdStorage } from './data-access/session-id-storage';
-import { DEFAULT_PAGE_SIZE } from './generator.config';
+import { DEFAULT_PAGE_SIZE, REQUEST_TIMEOUT_MS } from './generator.config';
+
+/** הגדרה לכל בקשה: האם לטעון את המצב מחדש כשלא ידוע אם השרת ביצע אותה. */
+interface RunOptions {
+  readonly recoverOnUnknown: boolean;
+}
 
 /**
  * "המנהל" של המסך. המקבילה של GeneratorService בשרת.
@@ -33,7 +38,7 @@ export class GeneratorFacade {
   /** הודעת השגיאה האחרונה, אם יש. */
   private readonly _error = signal<string | null>(null);
 
-  /** גודל העמוד שייבחר בכניסה הבאה ל"כל הקומבינציות". */
+  /** גודל העמוד שייבחר בכניסה הבאה ל"כל הקומבינציות". מתעדכן רק מתשובת השרת. */
   private readonly _preferredPageSize = signal(DEFAULT_PAGE_SIZE);
 
   // ---------- מה שהרכיבים רואים (קריאה בלבד) ----------
@@ -94,7 +99,7 @@ export class GeneratorFacade {
 
   /** שינוי גודל עמוד: השרת מחשב מחדש את העמוד שמכיל את השורה העליונה. */
   changePageSize(pageSize: number): void {
-    this._preferredPageSize.set(pageSize);
+    // את הגודל המועדף לא משנים כאן אלא רק כשהשרת מאשר (adopt), כדי שגודל שנדחה לא יישאר
     this.showAll('Current', pageSize);
   }
 
@@ -110,12 +115,13 @@ export class GeneratorFacade {
       return;
     }
 
-    this.run(this.api.reset(id), () => this.clear());
+    this.run(this.api.reset(id), () => this.clear(), { recoverOnUnknown: true });
   }
 
   /** טוען מחדש את המצב מהשרת. אחרי רענון דף, אחרי התנגשות, או בלחיצה על "נסה שוב". */
   reload(): void {
-    this.withSession(id => this.api.getState(id));
+    // recoverOnUnknown: false. אם גם הטעינה נכשלת, לא מנסים שוב לבד, כדי שלא תיווצר לולאה
+    this.withSession(id => this.api.getState(id), { recoverOnUnknown: false });
   }
 
   // ---------- עזרים ----------
@@ -124,23 +130,29 @@ export class GeneratorFacade {
     this.withSession(id => this.api.showAll(id, { action, pageSize, pageNumber }));
   }
 
-  /** בקשה שמחזירה את המצב החדש של ה-Session, ושמירתו כשהיא חוזרת. */
-  private withSession(request: (sessionId: string) => Observable<SessionDto>): void {
+  /**
+   * בקשה שמחזירה את המצב החדש של ה-Session, ושמירתו כשהיא חוזרת.
+   * ברירת המחדל: פעולה שמשנה מצב, ולכן אם התוצאה לא ידועה טוענים את המצב מחדש.
+   */
+  private withSession(
+    request: (sessionId: string) => Observable<SessionDto>,
+    options: RunOptions = { recoverOnUnknown: true },
+  ): void {
     const id = this._sessionId();
     if (id === null) {
       return;
     }
 
-    this.run(request(id), session => this.adopt(session));
+    this.run(request(id), session => this.adopt(session), options);
   }
 
   /**
    * הלב של ה-Facade. כל הבקשות עוברות כאן:
    * 1. אם כבר יש בקשה באוויר, מתעלמים (מונע לחיצה כפולה).
-   * 2. שולחים.
+   * 2. שולחים, עם הגבלת זמן.
    * 3. בהצלחה: onSuccess. בכישלון: handleError.
    */
-  private run<T>(request: Observable<T>, onSuccess: (value: T) => void): void {
+  private run<T>(request: Observable<T>, onSuccess: (value: T) => void, options: RunOptions = { recoverOnUnknown: false }): void {
     if (this._busy()) {
       return;
     }
@@ -148,14 +160,14 @@ export class GeneratorFacade {
     this._busy.set(true);
     this._error.set(null);
 
-    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    request.pipe(timeout(REQUEST_TIMEOUT_MS), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: value => {
         this._busy.set(false);
         onSuccess(value);
       },
       error: (error: unknown) => {
         this._busy.set(false);
-        this.handleError(error);
+        this.handleError(error, options);
       },
     });
   }
@@ -164,16 +176,22 @@ export class GeneratorFacade {
   private adopt(session: SessionDto): void {
     this._session.set(session);
     this._sessionId.set(session.sessionId);
+
+    // הגודל שהשרת אישר הוא הגודל לכניסה הבאה ל"כל הקומבינציות"
+    if (session.page) {
+      this._preferredPageSize.set(session.page.pageSize);
+    }
   }
 
   /** חזרה למסך ההתחלה. */
   private clear(): void {
     this._session.set(null);
     this._sessionId.set(null);
+    this._preferredPageSize.set(DEFAULT_PAGE_SIZE);
     this.storage.remove();
   }
 
-  private handleError(error: unknown): void {
+  private handleError(error: unknown, options: RunOptions): void {
     const uiError = toUiError(error);
 
     switch (uiError.code) {
@@ -187,6 +205,14 @@ export class GeneratorFacade {
         // המסך לא מעודכן (למשל אותו Session פתוח בשתי לשוניות): טוענים את המצב האמיתי.
         // לא שולחים שוב את הפעולה עצמה, כדי לא לבצע אותה פעמיים.
         this.reload();
+        break;
+
+      default:
+        // אין תשובה, עבר הזמן, או שגיאת שרת: ייתכן שהשרת כן ביצע את הפעולה (למשל "הבא").
+        // טוענים את המצב האמיתי פעם אחת, כדי שהמסך לא יראה קומבינציה ישנה וידלג על אחת בלחיצה הבאה.
+        if (options.recoverOnUnknown && uiError.outcomeUnknown && this._sessionId() !== null) {
+          this.reload();
+        }
         break;
     }
 

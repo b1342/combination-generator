@@ -30,6 +30,14 @@ public class PageLinksBuilderTests
     }
 
     [Fact]
+    public void LongMaxValue_DoesNotOverflow()
+    {
+        var tokens = PageLinksBuilder.Build(long.MaxValue, long.MaxValue);
+
+        Assert.Equal(long.MaxValue, Assert.IsType<PageNumberToken>(tokens[^1]).Number);
+    }
+
+    [Fact]
     public void GeneralRules_HoldForEveryWindow()
     {
         for (long total = 1; total <= 60; total++)

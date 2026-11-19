@@ -24,7 +24,12 @@ export class AllViewComponent {
     [...new Set([...PAGE_SIZE_OPTIONS, this.page().pageSize])].sort((a, b) => a - b));
 
   onPageSizeChange(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
+    const select = event.target as HTMLSelectElement;
+    const value = Number(select.value);
+
+    // הבורר חוזר לגודל הנוכחי, ויתעדכן רק כשהשרת יאשר את הגודל החדש.
+    // כך, אם הבקשה נכשלת, לא נשאר על המסך גודל שלא באמת מוצג.
+    select.value = String(this.page().pageSize);
     this.pageSizeChanged.emit(value);
   }
 }

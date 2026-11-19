@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, untracked } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PageAction, PageDto, PageLinkDto, PageNavigation } from '../../data-access/generator-api.models';
 import { GroupDigitsPipe } from '../../presentation/group-digits.pipe';
@@ -30,6 +30,15 @@ export class PaginationComponent {
       validators: [Validators.required, Validators.pattern(/^[1-9][0-9]{0,18}$/)], // מספר חיובי, בלי אפסים מובילים
     }),
   });
+
+  constructor() {
+    // עמוד חדש הגיע מהשרת: מנקים את שדה הקפיצה ואת הודעת השגיאה שלו.
+    // אם הבקשה נכשלה, העמוד לא משתנה, והטקסט נשאר לתיקון.
+    effect(() => {
+      this.page();
+      untracked(() => this.jumpForm.reset());
+    });
+  }
 
   go(action: PageAction): void {
     this.navigateRequested.emit({ action });

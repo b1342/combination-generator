@@ -10,6 +10,8 @@ TestResults/
 node_modules/
 dist/
 .angular/
+out-tsc/
+coverage/
 
 # IDE / OS
 .vscode/*
@@ -23,3 +25,6 @@ Thumbs.db
 
 # Local review agents for VS Code Copilot (kept local, not published)
 .github/agents/
+
+# Local helper output (not part of the solution)
+Claude outputs/
