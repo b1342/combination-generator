@@ -12,6 +12,8 @@ dist/
 .angular/
 out-tsc/
 coverage/
+playwright-report/
+test-results/
 
 # IDE / OS
 .vscode/*

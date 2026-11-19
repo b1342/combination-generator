@@ -5,7 +5,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build"
+    "build": "ng build",
+    "test": "ng test",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@angular/common": "^20.0.0",
@@ -21,6 +23,10 @@
     "@angular/build": "^20.0.0",
     "@angular/cli": "^20.0.0",
     "@angular/compiler-cli": "^20.0.0",
-    "typescript": "~5.8.2"
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.0.0",
+    "jsdom": "^26.1.0",
+    "typescript": "~5.8.2",
+    "vitest": "^3.2.0"
   }
 }
