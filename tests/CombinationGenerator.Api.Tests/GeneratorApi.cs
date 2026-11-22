@@ -47,6 +47,10 @@ internal sealed class GeneratorApi
     public Task<HttpResponseMessage> AllAsync(Guid id, string action, int pageSize, string? pageNumber = null) =>
         _client.PostAsJsonAsync($"/api/generators/{id}/all", new { action, pageSize, pageNumber });
 
+    /// <summary>"התחל" עם גוף JSON גולמי, לבדיקת קלט שגוי.</summary>
+    public Task<HttpResponseMessage> StartRawAsync(string json) =>
+        _client.PostAsync("/api/generators", new StringContent(json, Encoding.UTF8, "application/json"));
+
     /// <summary>"כל הקומבינציות" עם גוף JSON גולמי, לבדיקת קלט שגוי (מספר במקום מילה, שדה חסר).</summary>
     public Task<HttpResponseMessage> AllRawAsync(Guid id, string json) =>
         _client.PostAsync($"/api/generators/{id}/all", new StringContent(json, Encoding.UTF8, "application/json"));

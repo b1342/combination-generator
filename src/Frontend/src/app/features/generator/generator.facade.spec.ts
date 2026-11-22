@@ -299,6 +299,17 @@ describe('GeneratorFacade', () => {
       expect(facade.error()).toBe('המצב השתנה');
     });
 
+    it('a stored id that is not valid (INVALID_SESSION_ID) returns to the start screen', () => {
+      setup('not-a-guid');
+      const get = pending<SessionDto>(api.getState);
+
+      facade.initialize();
+      get.error(problem(400, 'INVALID_SESSION_ID'));
+
+      expect(facade.sessionId()).toBeNull();
+      expect(storage.remove).toHaveBeenCalled();
+    });
+
     it('a session that disappeared returns to the start screen', () => {
       setup();
       startWith();
@@ -331,6 +342,44 @@ describe('GeneratorFacade', () => {
 
       expect(api.getState).toHaveBeenCalledTimes(1);
       expect(facade.session()?.current?.number).toBe('1');
+      // המסך שוב תואם לשרת: אין חסימה ואין הודעה ישנה
+      expect(facade.outOfSync()).toBe(false);
+      expect(facade.error()).toBeNull();
+    });
+
+    it('while the outcome is unknown, actions are blocked until the state is loaded', () => {
+      setup();
+      startWith();
+      const next = pending<SessionDto>(api.next);
+      const get = pending<SessionDto>(api.getState);
+
+      facade.next();
+      next.error(new HttpErrorResponse({ status: 0 }));
+      get.error(new HttpErrorResponse({ status: 0 }));
+
+      expect(facade.outOfSync()).toBe(true);
+
+      // כל לחיצה כזו הייתה עלולה לדלג על קומבינציה, ולכן לא נשלחת
+      facade.next();
+      facade.previous();
+      facade.enterAll();
+      facade.back();
+      expect(api.next).toHaveBeenCalledTimes(1);
+      expect(api.previous).not.toHaveBeenCalled();
+      expect(api.showAll).not.toHaveBeenCalled();
+      expect(api.back).not.toHaveBeenCalled();
+
+      // "נסה שוב" כן מותר, ואחרי שהוא מצליח הכול חוזר לעבוד
+      const retry = pending<SessionDto>(api.getState);
+      facade.reload();
+      respond(retry, session({ current: combination('1', [1, 2, 3]) }));
+
+      expect(facade.outOfSync()).toBe(false);
+      expect(facade.error()).toBeNull();
+
+      pending<SessionDto>(api.next);
+      facade.next();
+      expect(api.next).toHaveBeenCalledTimes(2);
     });
 
     it('if the reload also fails, it does not retry again (no loop)', () => {
@@ -370,18 +419,42 @@ describe('GeneratorFacade', () => {
       expect(storage.remove).toHaveBeenCalled();
     });
 
-    it('when the outcome is unknown, checks whether the session still exists', () => {
+    it.each([
+      ['no response', new HttpErrorResponse({ status: 0 })],
+      ['session already gone', problem(404, 'SESSION_NOT_FOUND')],
+      ['server error', new HttpErrorResponse({ status: 500, error: { status: 500 } })],
+    ])('on failure (%s) still returns to the start screen, without an error', (_, error) => {
       setup();
       startWith();
       const reset = pending<void>(api.reset);
-      const get = pending<SessionDto>(api.getState);
 
       facade.reset();
-      reset.error(new HttpErrorResponse({ status: 0 }));
-      get.error(problem(404, 'SESSION_NOT_FOUND'));
+      reset.error(error);
 
-      expect(api.getState).toHaveBeenCalledTimes(1);
+      expect(api.getState).not.toHaveBeenCalled();
       expect(facade.session()).toBeNull();
+      expect(facade.sessionId()).toBeNull();
+      expect(facade.error()).toBeNull();
+      expect(storage.remove).toHaveBeenCalled();
+    });
+
+    it('is allowed while out of sync, and clears the lock', () => {
+      setup();
+      startWith();
+      const next = pending<SessionDto>(api.next);
+      const get = pending<SessionDto>(api.getState);
+      facade.next();
+      next.error(new TimeoutError());
+      get.error(new TimeoutError());
+      expect(facade.outOfSync()).toBe(true);
+
+      const reset = pending<void>(api.reset);
+      facade.reset();
+      reset.next();
+      reset.complete();
+
+      expect(facade.sessionId()).toBeNull();
+      expect(facade.outOfSync()).toBe(false);
     });
   });
 });

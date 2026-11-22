@@ -82,6 +82,7 @@ npm start
 - **גודל העמוד נשלח בכל קריאה**, כמו שהמטלה דורשת. המקסימום בשרת: 200.
 - **מספרים שיכולים להיות גדולים** (סה"כ, מספר קומבינציה, מספרי דפים) **נשלחים כטקסט**. ‏JavaScript מדייק רק עד 2^53, ו-20! גדול מזה.
 - **שגיאות** חוזרות בפורמט ProblemDetails, עם שדה `code` (למשל `SESSION_NOT_FOUND`, ‏`NO_NEXT_PAGE`) והודעה בעברית בשדה `detail`.
+- **בדיקת קלט קפדנית:** שדה חובה חסר (`n`, ‏`pageSize`) לא נחשב 0 אלא `INVALID_REQUEST`; מספר שנשלח כטקסט (`"n": "3"`) נדחה; ‏`pageNumber` מותר רק עם `Specific`, ובלי אפסים מובילים; ‏id שאינו GUID מחזיר 400 ‏`INVALID_SESSION_ID`.
 
 ---
 
@@ -112,7 +113,9 @@ tests/                                   Domain, ‏Application, ‏Infrastructu
 
 ---
 
-## הגדרות (`src/Backend/CombinationGenerator.Api/appsettings.json`)
+## הגדרות
+
+**שרת:** ‏`src/Backend/CombinationGenerator.Api/appsettings.json`, ובפיתוח גם `appsettings.Development.json` (שגובר עליו).
 
 | מפתח | ברירת מחדל | משמעות |
 |---|---|---|
@@ -120,9 +123,16 @@ tests/                                   Domain, ‏Application, ‏Infrastructu
 | `SessionStore:MaxSessions` | ‏1000 | כמה Sessions לכל היותר בו-זמנית |
 | `SessionStore:CleanupIntervalSeconds` | ‏60 | כל כמה זמן המנקה ברקע מוחק Sessions שפגו |
 | `Generator:MaxPageSize` | ‏200 | גודל עמוד מקסימלי |
-| `Cors:AllowedOrigins` | `http://localhost:4200` | הכתובות שמורשות לפנות לשרת מהדפדפן |
+| `Cors:AllowedOrigins` | ריק; בפיתוח `http://localhost:4200` | הכתובות שמורשות לפנות לשרת מהדפדפן. בייצור ריק, כי הלקוח והשרת באותה כתובת |
 
-כתובת השרת בצד הלקוח: `src/Frontend/src/environments/environment.ts`.
+**לקוח:** כתובת ה-API נקבעת לפי סוג הבנייה:
+
+| קובץ | מתי | כתובת |
+|---|---|---|
+| `src/environments/environment.development.ts` | ‏`ng serve`, הבדיקות וה-E2E (דרך `fileReplacements` ב-`angular.json`) | `http://localhost:5080/api/generators` |
+| `src/environments/environment.ts` | ‏`ng build` (ייצור) | `/api/generators` (יחסית: הלקוח מוגש מאותה כתובת כמו השרת) |
+
+הממשק משתמש בגופני המערכת בלבד, בלי הורדה מאתר חיצוני, כך שהוא עובד גם בלי אינטרנט.
 
 ---
 

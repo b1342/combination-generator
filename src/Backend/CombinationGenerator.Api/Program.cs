@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
 using CombinationGenerator.Api.Errors;
 using CombinationGenerator.Application.Generators;
 using CombinationGenerator.Infrastructure;
@@ -13,10 +14,19 @@ builder.Services
     .AddControllers()
     // enum-ים נשלחים ומתקבלים כטקסט ("Next", "All"). מספרים (0, 1, 99) נדחים ב-400:
     // בלי allowIntegerValues: false, הערך 99 היה עובר והופך לשגיאה פנימית (500)
-    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)))
-    // גוף בקשה שלא נקרא (JSON שבור, סוג לא נכון): אותו פורמט ואותו שדה "code" כמו כל שאר השגיאות,
-    // ובלי לחשוף שמות של מחלקות פנימיות כמו בתשובת ברירת המחדל
-    .ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = _ => ApiErrors.ToResult(ApiErrors.InvalidRequest));
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+
+        // מספר חייב להגיע כמספר: "n": "3" (טקסט) נדחה. ברירת המחדל של ASP.NET הייתה מקבלת אותו בשקט
+        options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+    })
+    // קלט שלא נקרא: אותו פורמט ואותו שדה "code" כמו כל שאר השגיאות, ובלי לחשוף שמות של מחלקות פנימיות.
+    // מזהה בכתובת שאינו GUID מקבל קוד משלו; כל השאר (JSON שבור, סוג לא נכון) הם INVALID_REQUEST.
+    .ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = context =>
+        ApiErrors.ToResult(context.ModelState.TryGetValue("id", out var id) && id.Errors.Count > 0
+            ? ApiErrors.InvalidSessionId
+            : ApiErrors.InvalidRequest));
 
 // שגיאות לא צפויות יוחזרו בפורמט ProblemDetails, כמו כל שאר השגיאות
 builder.Services.AddProblemDetails();
@@ -24,17 +34,14 @@ builder.Services.AddProblemDetails();
 // ============================================================
 // 2. Application: ה-Service וההגדרות שלו
 // ============================================================
-var generatorOptions = builder.Configuration
-    .GetSection(GeneratorOptions.SectionName)
-    .Get<GeneratorOptions>() ?? new GeneratorOptions();
+// אותו דפוס כמו SessionStoreOptions: קושרים מההגדרות, ובודקים בעליית השרת (ולא בבקשה הראשונה)
+builder.Services.AddOptions<GeneratorOptions>()
+    .Bind(builder.Configuration.GetSection(GeneratorOptions.SectionName))
+    .Validate(options => options.IsValid, $"{GeneratorOptions.SectionName}:MaxPageSize must be at least 1.")
+    .ValidateOnStart();
 
-// הגדרה שגויה מפילה את השרת כבר בעלייה, עם הודעה ברורה, ולא בבקשה הראשונה
-if (!generatorOptions.IsValid)
-{
-    throw new InvalidOperationException($"{GeneratorOptions.SectionName}:MaxPageSize must be at least 1.");
-}
-
-builder.Services.AddSingleton(generatorOptions);
+// GeneratorService מקבל את GeneratorOptions עצמו, בלי תלות ב-IOptions
+builder.Services.AddSingleton(provider => provider.GetRequiredService<IOptions<GeneratorOptions>>().Value);
 
 // Singleton: ה-Service לא שומר שום מצב משלו (הכל במגירה), אז אחד מספיק לכל השרת
 builder.Services.AddSingleton<GeneratorService>();

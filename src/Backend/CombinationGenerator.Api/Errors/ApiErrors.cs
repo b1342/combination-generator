@@ -20,9 +20,16 @@ internal static class ApiErrors
     public static readonly ApiError InvalidAction =
         new(StatusCodes.Status400BadRequest, "INVALID_ACTION", "Invalid action", "הפעולה חייבת להיות אחת מ: First, Previous, Next, Last, Specific, Current.");
 
-    /// <summary>גוף הבקשה לא נקרא בכלל: JSON שבור, או ערך מסוג לא נכון (למשל "action": 99 או "Jump").</summary>
+    /// <summary>
+    /// הבקשה לא תקינה: JSON שבור, ערך מסוג לא נכון (למשל "action": 99, או "n": "3" כטקסט),
+    /// שדה חובה חסר, או מספר דף בפעולה שאינה Specific.
+    /// </summary>
     public static readonly ApiError InvalidRequest =
-        new(StatusCodes.Status400BadRequest, "INVALID_REQUEST", "Invalid request", "גוף הבקשה אינו תקין.");
+        new(StatusCodes.Status400BadRequest, "INVALID_REQUEST", "Invalid request", "הבקשה אינה תקינה.");
+
+    /// <summary>המזהה בכתובת אינו GUID, למשל /api/generators/abc/next.</summary>
+    public static readonly ApiError InvalidSessionId =
+        new(StatusCodes.Status400BadRequest, "INVALID_SESSION_ID", "Invalid session id", "מזהה ה-Session אינו תקין.");
 
     /// <summary>
     /// השגיאה בפורמט הסטנדרטי ProblemDetails, עם שדה "code" שהלקוח יכול לבדוק.

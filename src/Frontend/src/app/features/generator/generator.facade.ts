@@ -7,9 +7,16 @@ import { toUiError } from './data-access/generator-errors';
 import { SessionIdStorage } from './data-access/session-id-storage';
 import { DEFAULT_PAGE_SIZE, REQUEST_TIMEOUT_MS } from './generator.config';
 
-/** הגדרה לכל בקשה: האם לטעון את המצב מחדש כשלא ידוע אם השרת ביצע אותה. */
+/** הגדרות לבקשה אחת. */
 interface RunOptions {
-  readonly recoverOnUnknown: boolean;
+  /** פעולה שמשנה מצב: אם לא ידוע אם השרת ביצע אותה, נכנסים ל"לא מסונכרן" וטוענים את המצב מחדש. */
+  readonly recoverOnUnknown?: boolean;
+
+  /** מותר גם כשהמסך לא מסונכרן. רק טעינת המצב ו"איפוס" מותרים אז. */
+  readonly allowWhileOutOfSync?: boolean;
+
+  /** טיפול מיוחד בשגיאה, במקום הטיפול הרגיל (handleError). */
+  readonly onError?: (error: unknown) => void;
 }
 
 /**
@@ -38,6 +45,12 @@ export class GeneratorFacade {
   /** הודעת השגיאה האחרונה, אם יש. */
   private readonly _error = signal<string | null>(null);
 
+  /**
+   * true כשלא ידוע אם המסך תואם לשרת: בקשה שמשנה מצב נכשלה בלי תשובה ברורה (למשל עבר הזמן).
+   * במצב הזה כל הכפתורים חסומים עד שהטעינה מהשרת מצליחה, כדי שלחיצה על "הבא" לא תדלג על קומבינציה.
+   */
+  private readonly _outOfSync = signal(false);
+
   /** גודל העמוד שייבחר בכניסה הבאה ל"כל הקומבינציות". מתעדכן רק מתשובת השרת. */
   private readonly _preferredPageSize = signal(DEFAULT_PAGE_SIZE);
 
@@ -47,6 +60,7 @@ export class GeneratorFacade {
   readonly session = this._session.asReadonly();
   readonly busy = this._busy.asReadonly();
   readonly error = this._error.asReadonly();
+  readonly outOfSync = this._outOfSync.asReadonly();
 
   // ---------- הכפתורים ----------
 
@@ -108,20 +122,45 @@ export class GeneratorFacade {
     this.withSession(id => this.api.back(id));
   }
 
-  /** "איפוס": מוחקים בשרת, ורק אחרי אישור מנקים גם כאן. */
+  /**
+   * "איפוס": מוחקים בשרת וחוזרים למסך ההתחלה.
+   * גם אם המחיקה נכשלה חוזרים להתחלה, בלי הודעת שגיאה: המשתמשת ביקשה להתחיל מחדש, וזה מה שתקבל.
+   * Session שלא נמחק בשרת יפוג לבד אחרי 30 דקות.
+   */
   reset(): void {
     const id = this._sessionId();
     if (id === null) {
       return;
     }
 
-    this.run(() => this.api.reset(id), () => this.clear(), { recoverOnUnknown: true });
+    this.run(() => this.api.reset(id), () => this.clear(), {
+      allowWhileOutOfSync: true,
+      onError: () => this.clear(),
+    });
   }
 
-  /** טוען מחדש את המצב מהשרת. אחרי רענון דף, אחרי התנגשות, או בלחיצה על "נסה שוב". */
+  /**
+   * טוען מחדש את המצב מהשרת. אחרי רענון דף, אחרי התנגשות, או בלחיצה על "נסה שוב".
+   * כשהטעינה מצליחה המסך שוב מסונכרן, ולכן גם הודעת השגיאה הקודמת כבר לא נכונה ונמחקת.
+   */
   reload(): void {
-    // recoverOnUnknown: false. אם גם הטעינה נכשלת, לא מנסים שוב לבד, כדי שלא תיווצר לולאה
-    this.withSession(id => this.api.getState(id), { recoverOnUnknown: false });
+    const id = this._sessionId();
+    if (id === null) {
+      return;
+    }
+
+    // recoverOnUnknown כבוי: אם גם הטעינה נכשלת, לא מנסים שוב לבד, כדי שלא תיווצר לולאה
+    this.run(
+      () => this.api.getState(id),
+      session => {
+        this.adopt(session);
+        if (this._outOfSync()) {
+          this._outOfSync.set(false);
+          this._error.set(null);
+        }
+      },
+      { allowWhileOutOfSync: true },
+    );
   }
 
   // ---------- עזרים ----------
@@ -149,16 +188,17 @@ export class GeneratorFacade {
   /**
    * הלב של ה-Facade. כל הבקשות עוברות כאן:
    * 1. אם כבר יש בקשה באוויר, מתעלמים (מונע לחיצה כפולה).
+   *    גם כשהמסך לא מסונכרן מתעלמים, חוץ מטעינה ומאיפוס.
    * 2. רק אז יוצרים את הבקשה ושולחים אותה, עם הגבלת זמן.
-   * 3. בהצלחה: onSuccess. בכישלון: handleError.
+   * 3. בהצלחה: onSuccess. בכישלון: onError אם הוגדר, אחרת handleError.
    * הבקשה מגיעה כפונקציה (createRequest) ולא כ-Observable מוכן, כדי שבלחיצה כפולה היא לא תיווצר בכלל.
    */
   private run<T>(
     createRequest: () => Observable<T>,
     onSuccess: (value: T) => void,
-    options: RunOptions = { recoverOnUnknown: false },
+    options: RunOptions = {},
   ): void {
-    if (this._busy()) {
+    if (this._busy() || (this._outOfSync() && !options.allowWhileOutOfSync)) {
       return;
     }
 
@@ -172,7 +212,11 @@ export class GeneratorFacade {
       },
       error: (error: unknown) => {
         this._busy.set(false);
-        this.handleError(error, options);
+        if (options.onError) {
+          options.onError(error);
+        } else {
+          this.handleError(error, options);
+        }
       },
     });
   }
@@ -193,6 +237,8 @@ export class GeneratorFacade {
     this._session.set(null);
     this._sessionId.set(null);
     this._preferredPageSize.set(DEFAULT_PAGE_SIZE);
+    this._outOfSync.set(false);
+    this._error.set(null);
     this.storage.remove();
   }
 
@@ -201,7 +247,8 @@ export class GeneratorFacade {
 
     switch (uiError.code) {
       case 'SESSION_NOT_FOUND':
-        // ה-Session פג או נמחק: חוזרים למסך ההתחלה
+      case 'INVALID_SESSION_ID':
+        // ה-Session פג, נמחק, או שה-id השמור פגום: חוזרים למסך ההתחלה
         this.clear();
         break;
 
@@ -214,11 +261,18 @@ export class GeneratorFacade {
 
       default:
         // אין תשובה, עבר הזמן, או שגיאת שרת: ייתכן שהשרת כן ביצע את הפעולה (למשל "הבא").
-        // טוענים את המצב האמיתי פעם אחת, כדי שהמסך לא יראה קומבינציה ישנה וידלג על אחת בלחיצה הבאה.
+        // המסך כבר לא בטוח נכון, ולכן חוסמים את הכפתורים וטוענים את המצב האמיתי פעם אחת.
+        // אם הטעינה תצליח, ההודעה והחסימה יוסרו; אם לא, יופיע "נסה שוב".
         if (options.recoverOnUnknown && uiError.outcomeUnknown && this._sessionId() !== null) {
+          this._outOfSync.set(true);
           this.reload();
         }
         break;
+    }
+
+    // אם הטעינה כבר הצליחה (תשובה מיידית), המסך מסונכרן ואין מה להודיע
+    if (options.recoverOnUnknown && uiError.outcomeUnknown && this._sessionId() !== null && !this._outOfSync()) {
+      return;
     }
 
     // אחרי reload, שמנקה הודעות קודמות, כדי שההודעה תישאר על המסך

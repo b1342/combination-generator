@@ -14,6 +14,9 @@ export class NextViewComponent {
   readonly current = input<CombinationDto | null>(null);
   readonly disabled = input(false);
 
+  /** true אחרי שהשרת ענה "אין יותר קומבינציות": אין טעם ב"הבא" או ב"כל הקומבינציות". "הקודם" עדיין עובד. */
+  readonly atEnd = input(false);
+
   /** אין "הקודם" לפני הקומבינציה הראשונה. השוואת טקסט בלבד, בלי חשבון. */
   readonly hasPrevious = computed(() => {
     const current = this.current();

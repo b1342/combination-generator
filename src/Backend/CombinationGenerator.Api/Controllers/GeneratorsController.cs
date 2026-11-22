@@ -32,7 +32,13 @@ public sealed class GeneratorsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Start([FromBody] StartRequest request, CancellationToken cancellationToken)
     {
-        OperationResult result = await _service.StartAsync(request.N, cancellationToken);
+        // n חובה. שדה חסר הוא בקשה לא תקינה, ולא n = 0
+        if (request.N is not { } n)
+        {
+            return ErrorResponse(ApiErrors.InvalidRequest);
+        }
+
+        OperationResult result = await _service.StartAsync(n, cancellationToken);
 
         // 201 Created + הכתובת של ה-Session החדש בכותרת Location
         if (result is { Status: OperationStatus.Success, View: { } view })
@@ -47,14 +53,14 @@ public sealed class GeneratorsController : ControllerBase
     }
 
     /// <summary>המצב הנוכחי, בלי לשנות כלום. GET /api/generators/{id}</summary>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetState(Guid id, CancellationToken cancellationToken) =>
         ToActionResult(await _service.GetStateAsync(id, cancellationToken));
 
     /// <summary>GetNextAPI — "הבא". POST /api/generators/{id}/next</summary>
-    [HttpPost("{id:guid}/next")]
+    [HttpPost("{id}/next")]
     [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -62,7 +68,7 @@ public sealed class GeneratorsController : ControllerBase
         ToActionResult(await _service.NextAsync(id, cancellationToken));
 
     /// <summary>"הקודם": הקומבינציה הקודמת. POST /api/generators/{id}/previous</summary>
-    [HttpPost("{id:guid}/previous")]
+    [HttpPost("{id}/previous")]
     [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -73,7 +79,7 @@ public sealed class GeneratorsController : ControllerBase
     /// GetAllAPI — "כל הקומבינציות", כפתורי הדפדוף ושינוי גודל עמוד.
     /// POST /api/generators/{id}/all  גוף: { "action": "Next", "pageSize": 20, "pageNumber": "7" }
     /// </summary>
-    [HttpPost("{id:guid}/all")]
+    [HttpPost("{id}/all")]
     [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -86,11 +92,29 @@ public sealed class GeneratorsController : ControllerBase
             return ErrorResponse(ApiErrors.InvalidAction);
         }
 
-        // מספר הדף מגיע כטקסט; ממירים אותו ל-long (מדויק עד 9.2 × 10^18)
-        long? pageNumber = null;
-        if (action == PageNavigation.Specific)
+        // גודל העמוד חובה בכל קריאה
+        if (request.PageSize is not { } pageSize)
         {
-            if (!long.TryParse(request.PageNumber, NumberStyles.None, CultureInfo.InvariantCulture, out long parsed))
+            return ErrorResponse(ApiErrors.InvalidRequest);
+        }
+
+        // מספר דף שייך רק ל-Specific: חובה בה, ואסור בכל השאר (כדי שבקשה לא ברורה לא תבוצע בשקט)
+        bool isSpecific = action == PageAction.Specific;
+        bool hasPageNumber = !string.IsNullOrEmpty(request.PageNumber);
+        if (isSpecific && !hasPageNumber)
+        {
+            return ErrorResponse(ApiErrors.InvalidRequest);
+        }
+
+        if (!isSpecific && hasPageNumber)
+        {
+            return ErrorResponse(ApiErrors.InvalidRequest);
+        }
+
+        long? pageNumber = null;
+        if (isSpecific)
+        {
+            if (!TryParsePageNumber(request.PageNumber!, out long parsed))
             {
                 return ErrorResponse(ApiErrors.For(OperationStatus.InvalidPageNumber));
             }
@@ -98,11 +122,11 @@ public sealed class GeneratorsController : ControllerBase
             pageNumber = parsed;
         }
 
-        return ToActionResult(await _service.ShowAllAsync(id, action, request.PageSize, pageNumber, cancellationToken));
+        return ToActionResult(await _service.ShowAllAsync(id, ToNavigation(action), pageSize, pageNumber, cancellationToken));
     }
 
     /// <summary>"חזור". POST /api/generators/{id}/back</summary>
-    [HttpPost("{id:guid}/back")]
+    [HttpPost("{id}/back")]
     [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -113,13 +137,41 @@ public sealed class GeneratorsController : ControllerBase
     /// "איפוס". DELETE /api/generators/{id}
     /// תמיד 204, גם אם ה-Session כבר לא קיים: התוצאה זהה — אין Session (פעולה אידמפוטנטית).
     /// </summary>
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Reset(Guid id, CancellationToken cancellationToken)
     {
         await _service.ResetAsync(id, cancellationToken);
         return NoContent();
     }
+
+    // ---------- תרגום הקלט ----------
+
+    /// <summary>
+    /// מספר דף מטקסט ל-long (מדויק עד 9.2 × 10^18). רק ספרות, ובלי אפסים מובילים: "007" נדחה, כדי שלכל דף יהיה כתיב אחד.
+    /// </summary>
+    private static bool TryParsePageNumber(string text, out long pageNumber)
+    {
+        pageNumber = 0;
+        if (text.Length > 1 && text[0] == '0')
+        {
+            return false;
+        }
+
+        return long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out pageNumber);
+    }
+
+    /// <summary>מה-enum של ה-API ל-enum של ה-Domain. כאן, ורק כאן, שני העולמות נפגשים.</summary>
+    private static PageNavigation ToNavigation(PageAction action) => action switch
+    {
+        PageAction.First => PageNavigation.First,
+        PageAction.Previous => PageNavigation.Previous,
+        PageAction.Next => PageNavigation.Next,
+        PageAction.Last => PageNavigation.Last,
+        PageAction.Specific => PageNavigation.Specific,
+        PageAction.Current => PageNavigation.Current,
+        _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Unknown page action."),
+    };
 
     // ---------- תרגום תוצאה ל-HTTP ----------
 

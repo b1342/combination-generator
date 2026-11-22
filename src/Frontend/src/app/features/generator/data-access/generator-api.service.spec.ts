@@ -3,13 +3,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SESSION_ID, session } from '../../../../testing/fixtures';
+import { environment } from '../../../../environments/environment';
 import { GeneratorApiService } from './generator-api.service';
 
 describe('GeneratorApiService', () => {
   // מאפסים את מודול הבדיקה אחרי כל בדיקה, כך שכל בדיקה מתחילה נקייה
   afterEach(() => TestBed.resetTestingModule());
 
-  const base = 'http://localhost:5080/api/generators';
+  // אותה כתובת שהשירות משתמש בה (בבדיקות: קובץ הפיתוח, דרך fileReplacements)
+  const base = environment.apiBaseUrl;
   let api: GeneratorApiService;
   let http: HttpTestingController;
 

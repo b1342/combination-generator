@@ -17,6 +17,14 @@
       <p class="alert alert-error" role="alert">{{ error }}</p>
     }
 
+    @if (facade.outOfSync() && facade.session() && !facade.busy()) {
+      <!-- לא ידוע אם הפעולה האחרונה בוצעה בשרת: הכפתורים חסומים עד שהמצב נטען -->
+      <div class="alert alert-warning sync-banner" role="status">
+        <span>לא ברור אם הפעולה האחרונה בוצעה. כדי לא לדלג על קומבינציה, צריך קודם לטעון את המצב מהשרת.</span>
+        <button type="button" class="btn btn-primary" (click)="facade.reload()">נסה שוב</button>
+      </div>
+    }
+
     @if (facade.session(); as session) {
       <section class="stats">
         <div class="stat">
@@ -36,7 +44,8 @@
       @if (session.mode === 'Next') {
         <app-next-view
           [current]="session.current"
-          [disabled]="facade.busy()"
+          [atEnd]="session.noMorePermutations"
+          [disabled]="facade.busy() || facade.outOfSync()"
           (previousRequested)="facade.previous()"
           (nextRequested)="facade.next()"
           (allRequested)="facade.enterAll()" />
@@ -44,7 +53,7 @@
         @if (session.page; as page) {
           <app-all-view
             [page]="page"
-            [disabled]="facade.busy()"
+            [disabled]="facade.busy() || facade.outOfSync()"
             (navigateRequested)="facade.navigate($event)"
             (pageSizeChanged)="facade.changePageSize($event)"
             (backRequested)="facade.back()" />

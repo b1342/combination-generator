@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SESSION_ID, allSession, combination, session } from '../../../testing/fixtures';
 import { buttonByText, submitForm, text, typeInto } from '../../../testing/dom';
+import { environment } from '../../../environments/environment';
 import { GeneratorPageComponent } from './generator-page.component';
 
 /**
@@ -14,7 +15,8 @@ describe('GeneratorPageComponent', () => {
   // מאפסים את מודול הבדיקה אחרי כל בדיקה, כך שכל בדיקה מתחילה נקייה
   afterEach(() => TestBed.resetTestingModule());
 
-  const base = 'http://localhost:5080/api/generators';
+  // אותה כתובת שהשירות משתמש בה (בבדיקות: קובץ הפיתוח, דרך fileReplacements)
+  const base = environment.apiBaseUrl;
   let http: HttpTestingController;
   let fixture: ComponentFixture<GeneratorPageComponent>;
 
@@ -99,6 +101,55 @@ describe('GeneratorPageComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('הפעולה לא מתאימה למסך הנוכחי.');
+  });
+
+  it('when "next" gets no answer: locks the buttons until "try again" loads the real state', () => {
+    open();
+    startWith('3');
+
+    buttonByText(fixture, 'הבא').click();
+    http.expectOne(`${base}/${SESSION_ID}/next`).error(new ProgressEvent('error'));
+    http.expectOne(`${base}/${SESSION_ID}`).error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(text(fixture)).toContain('לא ברור אם הפעולה האחרונה בוצעה');
+    expect(buttonByText(fixture, 'הבא').disabled).toBe(true);
+    expect(buttonByText(fixture, 'כל הקומבינציות').disabled).toBe(true);
+
+    buttonByText(fixture, 'נסה שוב').click();
+    http.expectOne(`${base}/${SESSION_ID}`).flush(session({ current: combination('1', [1, 2, 3]) }));
+    fixture.detectChanges();
+
+    expect(text(fixture)).not.toContain('לא ברור אם הפעולה האחרונה בוצעה');
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    expect(buttonByText(fixture, 'הבא').disabled).toBe(false);
+    expect(text(fixture)).toContain('קומבינציה מספר 1 – [1,2,3]');
+  });
+
+  it('after "no more combinations": "next" is disabled, "previous" is not', () => {
+    open();
+    startWith('3');
+
+    buttonByText(fixture, 'הבא').click();
+    http.expectOne(`${base}/${SESSION_ID}/next`).flush(
+      session({ current: combination('6', [3, 2, 1]), noMorePermutations: true, message: 'אין יותר קומבינציות.' }),
+    );
+    fixture.detectChanges();
+
+    expect(buttonByText(fixture, 'הבא').disabled).toBe(true);
+    expect(buttonByText(fixture, 'הקודם').disabled).toBe(false);
+  });
+
+  it('"reset" returns to the input screen even if the server did not answer', () => {
+    open();
+    startWith('3');
+
+    buttonByText(fixture, 'איפוס').click();
+    http.expectOne(`${base}/${SESSION_ID}`).error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#n')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
   });
 
   it('"reset" returns to the input screen after the server confirms', () => {

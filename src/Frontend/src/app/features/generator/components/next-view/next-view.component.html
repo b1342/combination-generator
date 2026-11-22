@@ -17,7 +17,7 @@
 
   <div class="actions">
     <button type="button" class="btn btn-secondary" [disabled]="disabled() || !hasPrevious()" (click)="previousRequested.emit()">הקודם</button>
-    <button type="button" class="btn btn-primary" [disabled]="disabled()" (click)="nextRequested.emit()">הבא</button>
-    <button type="button" class="btn btn-outline" [disabled]="disabled()" (click)="allRequested.emit()">כל הקומבינציות</button>
+    <button type="button" class="btn btn-primary" [disabled]="disabled() || atEnd()" (click)="nextRequested.emit()">הבא</button>
+    <button type="button" class="btn btn-outline" [disabled]="disabled() || atEnd()" (click)="allRequested.emit()">כל הקומבינציות</button>
   </div>
 </section>

@@ -64,4 +64,15 @@ describe('NextViewComponent', () => {
       expect(buttonByText(fixture, label).disabled).toBe(true);
     }
   });
+
+  it('after "no more combinations": "next" and "all" are disabled, "previous" still works', () => {
+    const fixture = TestBed.createComponent(NextViewComponent);
+    fixture.componentRef.setInput('current', combination('6', [3, 2, 1]));
+    fixture.componentRef.setInput('atEnd', true);
+    fixture.detectChanges();
+
+    expect(buttonByText(fixture, 'הבא').disabled).toBe(true);
+    expect(buttonByText(fixture, 'כל הקומבינציות').disabled).toBe(true);
+    expect(buttonByText(fixture, 'הקודם').disabled).toBe(false);
+  });
 });

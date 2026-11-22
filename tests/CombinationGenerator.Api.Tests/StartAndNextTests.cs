@@ -8,11 +8,13 @@ namespace CombinationGenerator.Api.Tests;
 /// <summary>"התחל", "הבא" וקריאת המצב, דרך HTTP אמיתי.</summary>
 public class StartAndNextTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    private readonly HttpClient _client;
     private readonly GeneratorApi _api;
 
     public StartAndNextTests(WebApplicationFactory<Program> factory)
     {
-        _api = new GeneratorApi(factory.CreateClient());
+        _client = factory.CreateClient();
+        _api = new GeneratorApi(_client);
     }
 
     // ---------- "התחל" ----------
@@ -43,6 +45,30 @@ public class StartAndNextTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task Start_WithInvalidN_Returns400(int n)
     {
         await GeneratorApi.AssertProblemAsync(await _api.StartAsync(n), HttpStatusCode.BadRequest, "INVALID_N");
+    }
+
+    [Theory]
+    [InlineData("{}")]                  // n חסר: לא נחשב 0
+    [InlineData("{ \"n\": \"3\" }")]  // n כטקסט ולא כמספר
+    [InlineData("{ \"n\": 3.5 }")]     // לא מספר שלם
+    [InlineData("not json")]            // JSON שבור
+    public async Task Start_WithInvalidBody_ReturnsInvalidRequest(string body)
+    {
+        await GeneratorApi.AssertProblemAsync(await _api.StartRawAsync(body), HttpStatusCode.BadRequest, "INVALID_REQUEST");
+    }
+
+    [Fact]
+    public async Task N1_FullFlow_OneCombinationThenNoMore()
+    {
+        SessionResponse session = await _api.StartOkAsync(1);
+        Assert.Equal("1", session.TotalCount);
+
+        CombinationResponse only = GeneratorApi.RequireCurrent(await _api.NextOkAsync(session.SessionId));
+        Assert.Equal("1", only.Number);
+        Assert.Equal(new[] { 1 }, only.Permutation);
+
+        Assert.True((await _api.NextOkAsync(session.SessionId)).NoMorePermutations);
+        Assert.True((await _api.AllOkAsync(session.SessionId, "First", 20)).NoMorePermutations);
     }
 
     // ---------- "הבא" ----------
@@ -132,6 +158,18 @@ public class StartAndNextTests : IClassFixture<WebApplicationFactory<Program>>
 
         // ו"הבא" ממשיך מאותו מקום
         Assert.Equal("3", GeneratorApi.RequireCurrent(await _api.NextOkAsync(session.SessionId)).Number);
+    }
+
+    [Theory]
+    [InlineData("GET", "/api/generators/abc")]
+    [InlineData("POST", "/api/generators/abc/next")]
+    [InlineData("POST", "/api/generators/12345/back")]
+    [InlineData("DELETE", "/api/generators/not-a-guid")]
+    public async Task IdThatIsNotAGuid_Returns400WithCode(string method, string path)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), path);
+
+        await GeneratorApi.AssertProblemAsync(await _client.SendAsync(request), HttpStatusCode.BadRequest, "INVALID_SESSION_ID");
     }
 
     [Fact]

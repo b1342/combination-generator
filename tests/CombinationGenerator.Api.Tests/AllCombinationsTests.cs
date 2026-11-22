@@ -117,15 +117,46 @@ public class AllCombinationsTests : IClassFixture<WebApplicationFactory<Program>
     [InlineData("4")]       // יש רק 3 דפים
     [InlineData("-1")]      // שלילי
     [InlineData("abc")]     // לא מספר
-    [InlineData("")]        // ריק
-    [InlineData(null)]      // חסר
-    public async Task SpecificPage_Invalid_Returns400(string? pageNumber)
+    [InlineData("007")]     // אפסים מובילים: לכל דף כתיב אחד
+    public async Task SpecificPage_InvalidNumber_Returns400(string pageNumber)
     {
         SessionResponse session = await _api.StartOkAsync(3);
         await _api.AllOkAsync(session.SessionId, "First", 2);
 
         await GeneratorApi.AssertProblemAsync(
             await _api.AllAsync(session.SessionId, "Specific", 2, pageNumber), HttpStatusCode.BadRequest, "INVALID_PAGE_NUMBER");
+    }
+
+    [Theory]
+    [InlineData("")]        // ריק
+    [InlineData(null)]      // חסר
+    public async Task SpecificPage_WithoutNumber_IsAnInvalidRequest(string? pageNumber)
+    {
+        SessionResponse session = await _api.StartOkAsync(3);
+        await _api.AllOkAsync(session.SessionId, "First", 2);
+
+        await GeneratorApi.AssertProblemAsync(
+            await _api.AllAsync(session.SessionId, "Specific", 2, pageNumber), HttpStatusCode.BadRequest, "INVALID_REQUEST");
+    }
+
+    [Fact]
+    public async Task PageNumber_WithAnotherAction_IsRejected_NotIgnored()
+    {
+        SessionResponse session = await _api.StartOkAsync(4);
+        await _api.AllOkAsync(session.SessionId, "First", 2);
+
+        // לא ברור מה המשתמשת רצתה: "הבא", או דף 9? לא מנחשים
+        await GeneratorApi.AssertProblemAsync(
+            await _api.AllAsync(session.SessionId, "Next", 2, "9"), HttpStatusCode.BadRequest, "INVALID_REQUEST");
+    }
+
+    [Fact]
+    public async Task MissingPageSize_IsAnInvalidRequest_NotZero()
+    {
+        SessionResponse session = await _api.StartOkAsync(3);
+
+        await GeneratorApi.AssertProblemAsync(
+            await _api.AllRawAsync(session.SessionId, "{ \"action\": \"First\" }"), HttpStatusCode.BadRequest, "INVALID_REQUEST");
     }
 
     [Theory]
@@ -144,7 +175,7 @@ public class AllCombinationsTests : IClassFixture<WebApplicationFactory<Program>
     {
         SessionResponse session = await _api.StartOkAsync(3);
 
-        // "Jump" הוא לא ערך של PageNavigation, ולכן ASP.NET דוחה את הגוף עוד לפני ה-Controller
+        // "Jump" הוא לא ערך של PageAction, ולכן ASP.NET דוחה את הגוף עוד לפני ה-Controller
         await GeneratorApi.AssertProblemAsync(
             await _api.AllAsync(session.SessionId, "Jump", 2), HttpStatusCode.BadRequest, "INVALID_REQUEST");
     }
