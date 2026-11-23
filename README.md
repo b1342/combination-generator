@@ -55,7 +55,8 @@
 **השכבות:**
 
 ```
-Angular   רכיבים ← GeneratorFacade (המצב של המסך) ← GeneratorApiService
+Angular         components → GeneratorFacade → GeneratorApiService
+                (רכיבים שמציגים, המצב של המסך, הפניות לשרת)
               │  HTTP / JSON
 Api             Controller: בדיקת הקלט, המרה ל-JSON, קודי שגיאה
 Application     GeneratorService: קריאת ה-Session ← חישוב ← שמירה ← תשובה
@@ -173,7 +174,7 @@ src/
 tests/                                   Domain, ‏Application, ‏Infrastructure, ‏Api
 ```
 
-**כיוון התלויות:** ‏Api ← Application ← Domain, ו-Infrastructure מממשת את הממשק של Application. ‏Domain לא מכירה HTTP, אחסון או זמן.
+**כיוון התלויות:** ‏Api תלוי ב-Application, ו-Application תלוי ב-Domain. ‏Infrastructure מממשת את הממשק של Application. ‏Domain לא מכירה HTTP, אחסון או זמן.
 
 ---
 
@@ -236,7 +237,7 @@ tests/                                   Domain, ‏Application, ‏Infrastructu
 
 אם **אותה** משתמשת שולחת שתי בקשות יחד (לחיצה כפולה, או שתי לשוניות על אותו Session), רק אחת נשמרת. השנייה מקבלת ‏`409 SESSION_CONFLICT`, והלקוח טוען את המצב העדכני. אין דילוג על קומבינציה ואין כפילות.
 
-יש לזה בדיקות: `ThreeUsersAtOnce_EachKeepsHerOwnState` ובדיקת Playwright של שתי לשוניות שכל אחת מקבלת Session משלה (הפרדה בין משתמשות), ו-`DoubleClick_OnSameSession_NeverSkipsOrRepeatsACombination` (התנגשות באותו Session).
+יש לזה בדיקות: `ThreeUsersAtOnce_EachKeepsHerOwnState` ובדיקת Playwright של שתי לשוניות שכל אחת מקבלת Session משלה (הפרדה בין משתמשות), ו-`DoubleClick_OnSameSession_NeverSkipsOrRepeatsACombination` (לחיצות במקביל על אותו Session: אין דילוג ואין כפילות). את ההתנגשות עצמה בודקת `ManyParallelReplaces_OnSameVersion_ExactlyOneWins`: מבין כמה עדכונים על אותה גרסה, רק אחד מצליח.
 
 ### 4. מעבר ל-Redis: שני שינויים בשרת
 1. **מימוש חדש של `ISessionStore`, ‏`RedisSessionStore`:**
@@ -250,4 +251,4 @@ tests/                                   Domain, ‏Application, ‏Infrastructu
 ### 5. החיסרון העיקרי של NextPermutation עבור n = 20
 **הוא סדרתי:** כדי להגיע לתמורה k צריך לעבור על כל k התמורות שלפניה. ל-n=20 יש ‏20! ≈ 2.43×10¹⁸ תמורות. גם במיליארד צעדים בשנייה, הגעה לעמוד האחרון הייתה לוקחת **כ-77 שנים**. בנוסף, הוא תלוי בתמורה הקודמת, ולכן מחייב לשמור אותה.
 
-בגלל זה הקפיצה לעמוד (ובמיוחד ל"אחרון") נעשית ב-Unrank, שמגיע לכל מקום בעשרות פעולות.
+בגלל זה הקפיצה לעמוד (ובמיוחד ל"אחרון") נעשית ב-Unrank, שמגיע לכל מקום ב-20 צעדים (O(n²), כלומר כמה מאות פעולות פשוטות), במקום לעבור על 10¹⁸ קומבינציות.

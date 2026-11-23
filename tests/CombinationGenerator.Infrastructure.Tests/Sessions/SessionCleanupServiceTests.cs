@@ -12,8 +12,6 @@ namespace CombinationGenerator.Infrastructure.Tests.Sessions;
 /// </summary>
 public class SessionCleanupServiceTests
 {
-    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(60);
-
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero));
     private readonly IOptions<SessionStoreOptions> _options =
         Options.Create(new SessionStoreOptions { IdleTimeoutMinutes = 30, CleanupIntervalSeconds = 60, MaxSessions = 1000 });
@@ -30,12 +28,8 @@ public class SessionCleanupServiceTests
         {
             _time.Advance(TimeSpan.FromMinutes(31));
 
-            // הלולאה רצה ברקע: נותנים לה כמה מחזורים להגיע ל-RemoveExpired
-            for (int attempt = 0; attempt < 50 && store.Count > 0; attempt++)
-            {
-                _time.Advance(Interval);
-                await Task.Delay(20);
-            }
+            // הלולאה רצה ב-thread אחר: מחכים לה בזמן אמיתי, עד 5 שניות, גם במחשב עמוס
+            await WaitUntilAsync(() => store.Count == 0);
 
             Assert.Equal(0, store.Count);
         }
@@ -61,18 +55,25 @@ public class SessionCleanupServiceTests
 
             _time.Advance(TimeSpan.FromMinutes(11));   // 12:31: הראשון פג, השני בן 11 דקות
 
-            // הלולאה צריכה לרוץ ולמחוק בדיוק אחד. אם היא לא רצה בכלל, נשארים 2 והבדיקה נכשלת
-            for (int attempt = 0; attempt < 10 && store.Count > 1; attempt++)
-            {
-                _time.Advance(Interval);
-                await Task.Delay(20);
-            }
+            // הלולאה צריכה לרוץ ולמחוק בדיוק אחד. אם היא לא רצה בכלל, נשארים 2 והבדיקה נכשלת.
+            // השעון המזויף לא זז יותר, ולכן השני לא יכול לפוג בזמן ההמתנה
+            await WaitUntilAsync(() => store.Count < 2);
 
             Assert.Equal(1, store.Count);
         }
         finally
         {
             await service.StopAsync(CancellationToken.None);
+        }
+    }
+
+    /// <summary>מחכה עד שהתנאי מתקיים, או עד 5 שניות של זמן אמיתי.</summary>
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (!condition() && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(20);
         }
     }
 

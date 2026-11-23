@@ -10,6 +10,6 @@
       אזהרות על חולשת אבטחה שתתגלה בעתיד באחת הספריות (NuGet audit) נשארות אזהרות ולא שוברות את הבנייה.
       אחרת, מי שיוריד את הקוד בעוד חודש עלול לקבל בנייה שנכשלת בלי ששינו בה שורה.
     -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1900;NU1901;NU1902;NU1903;NU1904;NU1905</WarningsNotAsErrors>
   </PropertyGroup>
 </Project>

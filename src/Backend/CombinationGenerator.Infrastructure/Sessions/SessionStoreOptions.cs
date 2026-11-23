@@ -10,7 +10,6 @@ public sealed class SessionStoreOptions
 
     /// <summary>
     /// אחרי כמה דקות בלי שאף אחד נגע ב-Session הוא פג. השעון מתאפס בכל קריאה או החלפה.
-    /// ברירת מחדל זמנית; הערך הסופי ייקבע ב-appsettings.json.
     /// </summary>
     public int IdleTimeoutMinutes { get; set; } = 30;
 

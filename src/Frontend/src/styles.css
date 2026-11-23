@@ -342,6 +342,19 @@ input {
   overflow-wrap: anywhere;
 }
 
+/* המשפט מהמטלה והמספר באותה שורה: "סה"כ האפשרויות ... הוא: 6". במסך צר המספר יורד לשורה הבאה */
+.stat-wide {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+}
+
+.stat-wide .stat-label {
+  font-size: 17px;
+  color: var(--text);
+}
+
 /* ---------- מסך "הבא" ---------- */
 
 .next-view {

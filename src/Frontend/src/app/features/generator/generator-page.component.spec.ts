@@ -55,7 +55,7 @@ describe('GeneratorPageComponent', () => {
     // Angular מסיר רווחים בין תגיות, אז בודקים כל חלק בנפרד
     const labels = Array.from(fixture.nativeElement.querySelectorAll('.stat-label')).map(e => (e as HTMLElement).textContent?.trim());
     const values = Array.from(fixture.nativeElement.querySelectorAll('.stat-value')).map(e => (e as HTMLElement).textContent?.trim());
-    expect(labels).toEqual(['מספר איברים', 'סה״כ האפשרויות לסדר 20 מספרים בשורה הוא:']);
+    expect(labels).toEqual(['מספר איברים', 'סה"כ האפשרויות לסדר 20 מספרים בשורה הוא:']);
     expect(values).toEqual(['20', '2,432,902,008,176,640,000']);
     expect(sessionStorage.getItem('combination-generator:sessionId')).toBe(SESSION_ID);
   });

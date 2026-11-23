@@ -55,7 +55,7 @@ test('start shows n and the number of possibilities', async ({ page }) => {
   await start(page, 3);
 
   await expect(page.locator('.stats')).toContainText('מספר איברים');
-  await expect(page.locator('.stats')).toContainText('סה״כ האפשרויות לסדר 3 מספרים בשורה הוא:');
+  await expect(page.locator('.stats')).toContainText('סה"כ האפשרויות לסדר 3 מספרים בשורה הוא:');
   await expect(page.locator('.stat-value').nth(1)).toHaveText('6');
 });
 
