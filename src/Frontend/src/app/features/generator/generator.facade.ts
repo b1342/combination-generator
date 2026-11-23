@@ -17,6 +17,9 @@ interface RunOptions {
 
   /** טיפול מיוחד בשגיאה, במקום הטיפול הרגיל (handleError). */
   readonly onError?: (error: unknown) => void;
+
+  /** זו טעינת המצב עצמה. אם היא נכשלת, לא מתחילים ממנה עוד טעינה, כדי שלא תיווצר לולאה. */
+  readonly isReload?: boolean;
 }
 
 /**
@@ -144,26 +147,36 @@ export class GeneratorFacade {
    * כשהטעינה מצליחה המסך שוב מסונכרן, ולכן גם הודעת השגיאה הקודמת כבר לא נכונה ונמחקת.
    */
   reload(): void {
+    this.resync(true);
+  }
+
+  // ---------- עזרים ----------
+
+  /**
+   * טוען את המצב מהשרת. כשהטעינה מצליחה, המסך שוב מסונכרן והחסימה מוסרת.
+   * clearErrorOnSuccess: האם למחוק גם את ההודעה. אחרי התנגשות משאירים אותה, כדי שהמשתמשת תבין למה המסך השתנה.
+   */
+  private resync(clearErrorOnSuccess: boolean): void {
     const id = this._sessionId();
     if (id === null) {
       return;
     }
 
-    // recoverOnUnknown כבוי: אם גם הטעינה נכשלת, לא מנסים שוב לבד, כדי שלא תיווצר לולאה
+    // recoverOnUnknown כבוי ו-isReload דלוק: אם גם הטעינה נכשלת, לא מנסים שוב לבד
     this.run(
       () => this.api.getState(id),
       session => {
         this.adopt(session);
         if (this._outOfSync()) {
           this._outOfSync.set(false);
-          this._error.set(null);
+          if (clearErrorOnSuccess) {
+            this._error.set(null);
+          }
         }
       },
-      { allowWhileOutOfSync: true },
+      { allowWhileOutOfSync: true, isReload: true },
     );
   }
-
-  // ---------- עזרים ----------
 
   private showAll(action: PageAction, pageSize: number, pageNumber?: string): void {
     this.withSession(id => this.api.showAll(id, { action, pageSize, pageNumber }));
@@ -254,9 +267,13 @@ export class GeneratorFacade {
 
       case 'SESSION_CONFLICT':
       case 'INVALID_MODE':
-        // המסך לא מעודכן (למשל אותו Session פתוח בשתי לשוניות): טוענים את המצב האמיתי.
+        // המסך לא מעודכן (למשל אותו Session פתוח בשתי לשוניות): חוסמים את הכפתורים וטוענים את המצב האמיתי.
         // לא שולחים שוב את הפעולה עצמה, כדי לא לבצע אותה פעמיים.
-        this.reload();
+        // אם הטעינה תיכשל, החסימה נשארת ויופיע "נסה שוב", כדי שלחיצה לא תתקדם ממצב שלא מוצג.
+        if (!options.isReload) {
+          this._outOfSync.set(true);
+          this.resync(false);
+        }
         break;
 
       default:

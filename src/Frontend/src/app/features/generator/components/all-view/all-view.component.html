@@ -27,7 +27,7 @@
         @for (row of page().rows; track row.number) {
           <tr>
             <td class="num"><bdi>{{ row.number | groupDigits }}</bdi></td>
-            <td><bdi class="permutation" dir="ltr">[{{ row.permutation.join(', ') }}]</bdi></td>
+            <td><bdi class="permutation" dir="ltr">[{{ row.permutation.join(',') }}]</bdi></td>
           </tr>
         }
       </tbody>

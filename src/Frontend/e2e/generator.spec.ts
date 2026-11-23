@@ -96,7 +96,7 @@ test('"all combinations" starts after the last one shown; "back" shows the last 
   await button(page, 'כל הקומבינציות').click();
   await expect(rows(page)).toHaveCount(4); // 3..6
   await expect(rows(page).first()).toContainText('3');
-  await expect(rows(page).first()).toContainText('[2, 1, 3]');
+  await expect(rows(page).first()).toContainText('[2,1,3]');
 
   await button(page, 'חזור').click();
   await expect(currentLine(page)).toHaveText('קומבינציה מספר 6 – [3,2,1]');
@@ -112,26 +112,26 @@ test('paging: page size, next, last, first, jump, page link and back', async ({ 
   await page.getByLabel('שורות בעמוד').selectOption('5');
   await expect(pageStatus(page)).toHaveText('דף 1 מתוך 5');
   await expect(rows(page)).toHaveCount(5);
-  await expect(button(page, 'ראשון')).toBeDisabled();
-  await expect(button(page, 'קודם')).toBeDisabled();
+  await expect(button(page, 'דף ראשון')).toBeDisabled();
+  await expect(button(page, 'דף קודם')).toBeDisabled();
 
-  await button(page, 'הבא').click();
+  await button(page, 'דף הבא').click();
   await expect(pageStatus(page)).toHaveText('דף 2 מתוך 5');
-  await expect(rows(page).first()).toContainText('[1, 4, 3, 2]'); // מספר 6
+  await expect(rows(page).first()).toContainText('[1,4,3,2]'); // מספר 6
 
-  await button(page, 'אחרון').click();
+  await button(page, 'דף אחרון').click();
   await expect(pageStatus(page)).toHaveText('דף 5 מתוך 5');
   await expect(rows(page)).toHaveCount(4); // עמוד אחרון חלקי: 21..24
-  await expect(rows(page).last()).toContainText('[4, 3, 2, 1]');
-  await expect(button(page, 'אחרון')).toBeDisabled();
+  await expect(rows(page).last()).toContainText('[4,3,2,1]');
+  await expect(button(page, 'דף אחרון')).toBeDisabled();
 
-  await button(page, 'ראשון').click();
+  await button(page, 'דף ראשון').click();
   await expect(pageStatus(page)).toHaveText('דף 1 מתוך 5');
 
   await page.getByLabel('מעבר לדף').fill('3');
   await button(page, 'עבור').click();
   await expect(pageStatus(page)).toHaveText('דף 3 מתוך 5');
-  await expect(rows(page).first()).toContainText('[2, 4, 1, 3]'); // מספר 11
+  await expect(rows(page).first()).toContainText('[2,4,1,3]'); // מספר 11
 
   await button(page, '4').click();
   await expect(pageStatus(page)).toHaveText('דף 4 מתוך 5');
@@ -159,11 +159,11 @@ test('n = 20: exact numbers far beyond 2^53, last page computed directly', async
   await expect(page.locator('.stat-value').nth(1)).toHaveText('2,432,902,008,176,640,000');
 
   await button(page, 'כל הקומבינציות').click();
-  await button(page, 'אחרון').click();
+  await button(page, 'דף אחרון').click();
 
   await expect(pageStatus(page)).toHaveText('דף 121,645,100,408,832,000 מתוך 121,645,100,408,832,000');
   await expect(rows(page).last()).toContainText('2,432,902,008,176,640,000');
-  await expect(rows(page).last()).toContainText('[20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]');
+  await expect(rows(page).last()).toContainText('[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]');
 });
 
 // ---------- רענון, איפוס ולשוניות ----------
@@ -179,7 +179,7 @@ test('a page refresh restores the same state from the server', async ({ page }) 
   await expect(pageStatus(page)).toHaveText('דף 1 מתוך 1');
   await page.reload();
   await expect(pageStatus(page)).toHaveText('דף 1 מתוך 1');
-  await expect(rows(page).first()).toContainText('[2, 1, 3]');
+  await expect(rows(page).first()).toContainText('[2,1,3]');
 });
 
 test('"reset" returns to the start screen, also after a refresh', async ({ page }) => {

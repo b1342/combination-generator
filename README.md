@@ -46,8 +46,8 @@ npm start
 
 | סוג | כמות | פקודה |
 |---|---|---|
-| שרת: יחידה ואינטגרציה (xUnit) | 201 | `dotnet test` (מתיקיית הפרויקט הראשית) |
-| לקוח: יחידה ורכיבים (Vitest + jsdom) | 94 | `cd src/Frontend` ואז `npm test` |
+| שרת: יחידה ואינטגרציה (xUnit) | 216 | `dotnet test` (מתיקיית הפרויקט הראשית) |
+| לקוח: יחידה ורכיבים (Vitest + jsdom) | 102 | `cd src/Frontend` ואז `npm test` |
 | קצה-לקצה בדפדפן (Playwright) | 11 | `cd src/Frontend` ואז `npm run e2e` |
 
 **בדיקות השרת** כוללות בדיקות API שמריצות את השרת האמיתי בתוך הבדיקה (`WebApplicationFactory`): כל הזרימות, קודי שגיאה, מספרים גדולים, לחיצה כפולה, שלוש משתמשות במקביל ו-CORS.
@@ -123,14 +123,16 @@ tests/                                   Domain, ‏Application, ‏Infrastructu
 | `SessionStore:MaxSessions` | ‏1000 | כמה Sessions לכל היותר בו-זמנית |
 | `SessionStore:CleanupIntervalSeconds` | ‏60 | כל כמה זמן המנקה ברקע מוחק Sessions שפגו |
 | `Generator:MaxPageSize` | ‏200 | גודל עמוד מקסימלי |
-| `Cors:AllowedOrigins` | ריק; בפיתוח `http://localhost:4200` | הכתובות שמורשות לפנות לשרת מהדפדפן. בייצור ריק, כי הלקוח והשרת באותה כתובת |
+| `Cors:AllowedOrigins` | ריק; בפיתוח `http://localhost:4200` | הכתובות שמורשות לפנות לשרת מהדפדפן. בפיתוח הלקוח והשרת רצים על פורטים שונים, ולכן צריך להתיר את הלקוח |
 
 **לקוח:** כתובת ה-API נקבעת לפי סוג הבנייה:
 
 | קובץ | מתי | כתובת |
 |---|---|---|
 | `src/environments/environment.development.ts` | ‏`ng serve`, הבדיקות וה-E2E (דרך `fileReplacements` ב-`angular.json`) | `http://localhost:5080/api/generators` |
-| `src/environments/environment.ts` | ‏`ng build` (ייצור) | `/api/generators` (יחסית: הלקוח מוגש מאותה כתובת כמו השרת) |
+| `src/environments/environment.ts` | ‏`ng build` (ייצור) | `/api/generators` (כתובת יחסית) |
+
+**פריסה לייצור (לא חלק מהמטלה, ולא ממומש):** הייתי מגישה את קבצי `ng build` ואת ה-API מאותה כתובת, למשל מאחורי reverse proxy כמו nginx או IIS. בזכות הכתובת היחסית לא צריך אז CORS בכלל, ולכן ברירת המחדל בשרת היא רשימה ריקה.
 
 הממשק משתמש בגופני המערכת בלבד, בלי הורדה מאתר חיצוני, כך שהוא עובד גם בלי אינטרנט.
 
@@ -166,11 +168,11 @@ tests/                                   Domain, ‏Application, ‏Infrastructu
 - **"הקודם"** (תוספת) ← PreviousPermutation, תמונת מראה של NextPermutation.
 
 ### 3. שלוש משתמשות בו-זמנית
-כל אחת לוחצת "התחל" ומקבלת Session משלה, עם מזהה משלה. המצבים נשמרים ב-`ConcurrentDictionary` ולא נוגעים זה בזה, וה-Service חסר מצב, כך שהבקשות רצות במקביל בלי נעילות.
+כל אחת לוחצת "התחל" ומקבלת Session משלה, עם מזהה משלה. המצבים נשמרים ב-`ConcurrentDictionary` ולא נוגעים זה בזה, וה-Service חסר מצב, כך שהבקשות רצות במקביל. קריאה ועדכון לא נועלים בכלל (העדכון הוא compare-and-swap); רק יצירת Session חדש נעולה לרגע קצר, כדי שבדיקת התקרה של 1000 תהיה מדויקת.
 
 אם **אותה** משתמשת שולחת שתי בקשות יחד (לחיצה כפולה, או שתי לשוניות על אותו Session), רק אחת נשמרת. השנייה מקבלת ‏`409 SESSION_CONFLICT`, והלקוח טוען את המצב העדכני. אין דילוג על קומבינציה ואין כפילות.
 
-יש לזה בדיקות: `ThreeUsersAtOnce_EachKeepsHerOwnState`, ‏`DoubleClick_OnSameSession_NeverSkipsOrRepeatsACombination`, ובדיקת Playwright של שתי לשוניות.
+יש לזה בדיקות: `ThreeUsersAtOnce_EachKeepsHerOwnState` ובדיקת Playwright של שתי לשוניות שכל אחת מקבלת Session משלה (הפרדה בין משתמשות), ו-`DoubleClick_OnSameSession_NeverSkipsOrRepeatsACombination` (התנגשות באותו Session).
 
 ### 4. מעבר ל-Redis: שני שינויים בשרת
 1. **מימוש חדש של `ISessionStore`, ‏`RedisSessionStore`:**

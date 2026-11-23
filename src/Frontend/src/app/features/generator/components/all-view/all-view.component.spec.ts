@@ -33,7 +33,7 @@ describe('AllViewComponent', () => {
         .map(cell => cell.textContent?.trim())
         .join(' '),
     );
-    expect(rows).toEqual(['2,432,902,008,176,639,801 [20, 19, 18]', '2,432,902,008,176,639,802 [20, 18, 19]']);
+    expect(rows).toEqual(['2,432,902,008,176,639,801 [20,19,18]', '2,432,902,008,176,639,802 [20,18,19]']);
   });
 
   it('offers 5, 10, 20, 50, 100 and selects the current size', () => {

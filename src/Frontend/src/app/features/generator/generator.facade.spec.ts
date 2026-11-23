@@ -299,6 +299,30 @@ describe('GeneratorFacade', () => {
       expect(facade.error()).toBe('המצב השתנה');
     });
 
+    it('conflict followed by a failed reload: stays locked until "try again" succeeds', () => {
+      setup();
+      startWith();
+      const next = pending<SessionDto>(api.next);
+      const get = pending<SessionDto>(api.getState);
+
+      facade.next();
+      next.error(problem(409, 'SESSION_CONFLICT', 'המצב השתנה'));
+      get.error(new HttpErrorResponse({ status: 0 }));
+
+      // המסך מציג מצב ישן: "הבא" היה מתקדם ממצב שהמשתמשת לא רואה, ולכן חסום
+      expect(facade.outOfSync()).toBe(true);
+      facade.next();
+      expect(api.next).toHaveBeenCalledTimes(1);
+
+      const retry = pending<SessionDto>(api.getState);
+      facade.reload();
+      respond(retry, session({ current: combination('3', [2, 1, 3]) }));
+
+      expect(facade.outOfSync()).toBe(false);
+      expect(facade.error()).toBeNull();
+      expect(facade.session()?.current?.number).toBe('3');
+    });
+
     it('a stored id that is not valid (INVALID_SESSION_ID) returns to the start screen', () => {
       setup('not-a-guid');
       const get = pending<SessionDto>(api.getState);

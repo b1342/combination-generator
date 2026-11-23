@@ -60,20 +60,20 @@ describe('PaginationComponent', () => {
 
   it('first page: "first" and "previous" are disabled; last page: "next" and "last"', () => {
     const first = create(page({ pageNumber: '1', totalPages: '3' })).fixture;
-    expect(buttonByText(first, 'ראשון').disabled).toBe(true);
-    expect(buttonByText(first, 'קודם').disabled).toBe(true);
-    expect(buttonByText(first, 'הבא').disabled).toBe(false);
+    expect(buttonByText(first, 'דף ראשון').disabled).toBe(true);
+    expect(buttonByText(first, 'דף קודם').disabled).toBe(true);
+    expect(buttonByText(first, 'דף הבא').disabled).toBe(false);
 
     const last = create(page({ pageNumber: '3', totalPages: '3' })).fixture;
-    expect(buttonByText(last, 'הבא').disabled).toBe(true);
-    expect(buttonByText(last, 'אחרון').disabled).toBe(true);
-    expect(buttonByText(last, 'קודם').disabled).toBe(false);
+    expect(buttonByText(last, 'דף הבא').disabled).toBe(true);
+    expect(buttonByText(last, 'דף אחרון').disabled).toBe(true);
+    expect(buttonByText(last, 'דף קודם').disabled).toBe(false);
   });
 
   it('the four direction buttons emit their action, without a page number', () => {
     const { fixture, emitted } = create(middle);
 
-    for (const label of ['ראשון', 'קודם', 'הבא', 'אחרון']) {
+    for (const label of ['דף ראשון', 'דף קודם', 'דף הבא', 'דף אחרון']) {
       buttonByText(fixture, label).click();
     }
 

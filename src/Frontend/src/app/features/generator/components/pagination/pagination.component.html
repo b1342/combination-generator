@@ -1,7 +1,7 @@
 <nav class="pagination" aria-label="דפדוף בין דפים">
   <div class="pager">
-    <button type="button" class="btn btn-page" [disabled]="disabled() || isFirstPage()" (click)="go('First')">ראשון</button>
-    <button type="button" class="btn btn-page" [disabled]="disabled() || isFirstPage()" (click)="go('Previous')">קודם</button>
+    <button type="button" class="btn btn-page" [disabled]="disabled() || isFirstPage()" (click)="go('First')">דף ראשון</button>
+    <button type="button" class="btn btn-page" [disabled]="disabled() || isFirstPage()" (click)="go('Previous')">דף קודם</button>
 
     @for (link of page().links; track $index) {
       @if (link.type === 'page') {
@@ -19,8 +19,8 @@
       }
     }
 
-    <button type="button" class="btn btn-page" [disabled]="disabled() || isLastPage()" (click)="go('Next')">הבא</button>
-    <button type="button" class="btn btn-page" [disabled]="disabled() || isLastPage()" (click)="go('Last')">אחרון</button>
+    <button type="button" class="btn btn-page" [disabled]="disabled() || isLastPage()" (click)="go('Next')">דף הבא</button>
+    <button type="button" class="btn btn-page" [disabled]="disabled() || isLastPage()" (click)="go('Last')">דף אחרון</button>
   </div>
 
   <div class="pagination-footer">

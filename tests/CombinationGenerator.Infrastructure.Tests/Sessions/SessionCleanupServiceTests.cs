@@ -46,17 +46,23 @@ public class SessionCleanupServiceTests
     }
 
     [Fact]
-    public async Task ActiveSession_IsNotRemoved()
+    public async Task OnlyTheExpiredSession_IsRemoved_TheActiveOneStays()
     {
         var store = new InMemorySessionStore(_options, _time);
-        await store.CreateAsync(GeneratorSession.Create(3));
+        await store.CreateAsync(GeneratorSession.Create(3));   // ייווצר ב-12:00 ויפוג ב-12:30
         var service = new SessionCleanupService(store, _options, _time, NullLogger<SessionCleanupService>.Instance);
 
         await service.StartAsync(CancellationToken.None);
         try
         {
-            // 10 מחזורי ניקוי = 10 דקות, הרבה פחות מ-30
-            for (int tick = 0; tick < 10; tick++)
+            _time.Advance(TimeSpan.FromMinutes(20));
+            await store.CreateAsync(GeneratorSession.Create(4));   // נוצר ב-12:20, פעיל עד 12:50
+            Assert.Equal(2, store.Count);
+
+            _time.Advance(TimeSpan.FromMinutes(11));   // 12:31: הראשון פג, השני בן 11 דקות
+
+            // הלולאה צריכה לרוץ ולמחוק בדיוק אחד. אם היא לא רצה בכלל, נשארים 2 והבדיקה נכשלת
+            for (int attempt = 0; attempt < 10 && store.Count > 1; attempt++)
             {
                 _time.Advance(Interval);
                 await Task.Delay(20);

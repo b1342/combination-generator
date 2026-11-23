@@ -4,7 +4,7 @@ import { PageAction, PageDto, PageLinkDto, PageNavigation } from '../../data-acc
 import { GroupDigitsPipe } from '../../presentation/group-digits.pipe';
 
 /**
- * כפתורי הדפדוף: ראשון, קודם, מספרי הדפים, הבא, אחרון, וקפיצה לדף.
+ * כפתורי הדפדוף, בנוסח המטלה: דף ראשון, דף קודם, מספרי הדפים, דף הבא, דף אחרון, וקפיצה לדף.
  * לא מחשב איזה דף לבקש: רק אומר "לחצו על הבא", והשרת מחליט.
  */
 @Component({
