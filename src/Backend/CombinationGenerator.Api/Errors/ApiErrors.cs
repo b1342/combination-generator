@@ -15,7 +15,8 @@ internal sealed record ApiError(int StatusCode, string Code, string Title, strin
 internal static class ApiErrors
 {
     /// <summary>
-    /// שגיאה שה-Controller מגלה בעצמו, לפני שהבקשה מגיעה ל-Service: action חסר או לא מוכר.
+    /// שגיאה שה-Controller מגלה בעצמו, לפני שהבקשה מגיעה ל-Service: action חסר.
+    /// (ערך לא מוכר, כמו "Jump", נדחה כבר בקריאת ה-JSON ומחזיר INVALID_REQUEST.)
     /// </summary>
     public static readonly ApiError InvalidAction =
         new(StatusCodes.Status400BadRequest, "INVALID_ACTION", "Invalid action", "הפעולה חייבת להיות אחת מ: First, Previous, Next, Last, Specific, Current.");

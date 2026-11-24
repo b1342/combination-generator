@@ -201,7 +201,7 @@ describe('GeneratorFacade', () => {
   // ---------- כל הקומבינציות ----------
 
   describe('all combinations', () => {
-    it('enters on the first page with the default page size (20)', () => {
+    it('with 6 combinations, enters with the smallest size that shows them all (10, not 20)', () => {
       setup();
       startWith();
       const all = pending<SessionDto>(api.showAll);

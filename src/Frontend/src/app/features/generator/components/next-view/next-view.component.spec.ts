@@ -30,7 +30,7 @@ describe('NextViewComponent', () => {
     expect(buttonByText(fixture, 'הקודם').disabled).toBe(true);
   });
 
-  it('shows the combination in the assignment format', () => {
+  it('shows the serial number line, and the combination as tiles below it', () => {
     const { fixture } = create(combination('2', [1, 3, 2]));
 
     expect(shownCombination(fixture)).toBe('קומבינציה מספר 2 – [1,3,2]');

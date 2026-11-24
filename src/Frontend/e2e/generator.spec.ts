@@ -107,8 +107,7 @@ test('"all combinations" starts after the last one shown; "back" shows the last 
 
   await button(page, 'כל הקומבינציות').click();
   await expect(rows(page)).toHaveCount(4); // 3..6
-  await expect(rows(page).first()).toContainText('3');
-  await expect(rows(page).first()).toContainText('[2,1,3]');
+  await expect(rows(page).first().locator('td')).toHaveText(['3', '[2,1,3]']);
 
   await button(page, 'חזור').click();
   await expectShown(page, 'קומבינציה מספר 6 – [3,2,1]');

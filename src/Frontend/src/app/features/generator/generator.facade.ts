@@ -26,7 +26,7 @@ interface RunOptions {
  * "המנהל" של המסך. המקבילה של GeneratorService בשרת.
  * שומר מה מוצג עכשיו (Signals), ולכל כפתור: שולח בקשה, ומעדכן את המצב לפי התשובה.
  * הרכיבים רק קוראים ממנו וקוראים לפונקציות שלו; הם לא מדברים עם השרת.
- * לא מחשב שום דבר: כל המספרים מגיעים מהשרת.
+ * לא מחשב קומבינציות או מספרים: כל אלה מגיעים מהשרת. ההחלטה היחידה כאן היא תצוגתית: אילו גדלי עמוד להציע.
  */
 @Injectable()
 export class GeneratorFacade {
@@ -110,7 +110,7 @@ export class GeneratorFacade {
     this.withSession(id => this.api.showAll(id, { action: 'First', pageSize }));
   }
 
-  /** כפתורי הדפדוף: ראשון, קודם, הבא, אחרון, מספר דף, קפיצה לדף. */
+  /** כפתורי הדפדוף: דף קודם, דף הבא, מספר דף, קפיצה לדף. */
   navigate(navigation: PageNavigation): void {
     const page = this._session()?.page;
     if (!page) {
