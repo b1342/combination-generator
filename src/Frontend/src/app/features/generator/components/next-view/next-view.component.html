@@ -1,11 +1,8 @@
 <section class="card next-view">
   @if (current(); as item) {
-    <!-- הנוסח מהמטלה: "קומבינציה מספר 1 – [1,2,3]". האריחים מתחת הם תצוגה נוספת של אותה תמורה. -->
-    <p class="current-line">
-      קומבינציה מספר <bdi>{{ item.number | groupDigits }}</bdi> –
-      <bdi class="permutation" dir="ltr">[{{ item.permutation.join(',') }}]</bdi>
-    </p>
-    <ol class="tiles" dir="ltr" aria-hidden="true">
+    <!-- המספר הסידורי, ומתחתיו הקומבינציה עצמה, כל איבר בריבוע משלו -->
+    <p class="current-line">קומבינציה מספר <bdi>{{ item.number | groupDigits }}</bdi></p>
+    <ol class="tiles" dir="ltr" [attr.aria-label]="'[' + item.permutation.join(',') + ']'">
       @for (value of item.permutation; track $index) {
         <li class="tile">{{ value }}</li>
       }

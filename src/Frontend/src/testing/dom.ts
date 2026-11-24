@@ -33,3 +33,11 @@ export function submitForm(fixture: Fixture): void {
 export function text(fixture: Fixture): string {
   return ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ').trim();
 }
+
+/** מה שמוצג במסך "הבא", בנוסח של המטלה: "קומבינציה מספר 1 – [1,2,3]" (השורה + הריבועים). */
+export function shownCombination(fixture: Fixture): string {
+  const element = fixture.nativeElement as HTMLElement;
+  const line = (element.querySelector('.current-line')?.textContent ?? '').replace(/\s+/g, ' ').trim();
+  const values = Array.from(element.querySelectorAll('.tile')).map(tile => tile.textContent?.trim());
+  return `${line} – [${values.join(',')}]`;
+}

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SESSION_ID, allSession, combination, session } from '../../../testing/fixtures';
-import { buttonByText, submitForm, text, typeInto } from '../../../testing/dom';
+import { buttonByText, submitForm, text, typeInto, shownCombination } from '../../../testing/dom';
 import { environment } from '../../../environments/environment';
 import { GeneratorPageComponent } from './generator-page.component';
 
@@ -68,7 +68,7 @@ describe('GeneratorPageComponent', () => {
     http.expectOne(`${base}/${SESSION_ID}/next`).flush(session({ current: combination('1', [1, 2, 3]) }));
     fixture.detectChanges();
 
-    expect(text(fixture)).toContain('קומבינציה מספר 1 – [1,2,3]');
+    expect(shownCombination(fixture)).toBe('קומבינציה מספר 1 – [1,2,3]');
   });
 
   it('"all combinations" switches to the table, "back" returns', () => {
@@ -86,7 +86,7 @@ describe('GeneratorPageComponent', () => {
     http.expectOne(`${base}/${SESSION_ID}/back`).flush(session({ current: combination('4', [2, 3, 1]) }));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('table')).toBeNull();
-    expect(text(fixture)).toContain('קומבינציה מספר 4 – [2,3,1]');
+    expect(shownCombination(fixture)).toBe('קומבינציה מספר 4 – [2,3,1]');
   });
 
   it('shows the server error message in an alert', () => {
@@ -123,7 +123,7 @@ describe('GeneratorPageComponent', () => {
     expect(text(fixture)).not.toContain('לא ברור אם הפעולה האחרונה בוצעה');
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
     expect(buttonByText(fixture, 'הבא').disabled).toBe(false);
-    expect(text(fixture)).toContain('קומבינציה מספר 1 – [1,2,3]');
+    expect(shownCombination(fixture)).toBe('קומבינציה מספר 1 – [1,2,3]');
   });
 
   it('after "no more combinations": "next" is disabled, "previous" is not', () => {
@@ -174,6 +174,6 @@ describe('GeneratorPageComponent', () => {
     get.flush(session({ current: combination('2', [1, 3, 2]) }));
     fixture.detectChanges();
 
-    expect(text(fixture)).toContain('קומבינציה מספר 2 – [1,3,2]');
+    expect(shownCombination(fixture)).toBe('קומבינציה מספר 2 – [1,3,2]');
   });
 });

@@ -15,6 +15,18 @@ function currentLine(page: Page): Locator {
   return page.locator('.current-line');
 }
 
+/** מה שמוצג במסך "הבא", בנוסח של המטלה: "קומבינציה מספר 1 – [1,2,3]" (השורה + הריבועים). */
+async function shownCombination(page: Page): Promise<string> {
+  const line = (await currentLine(page).innerText()).trim();
+  const values = await page.locator('.tile').allInnerTexts();
+  return `${line} – [${values.map(v => v.trim()).join(',')}]`;
+}
+
+/** מחכה עד שמוצגת בדיוק הקומבינציה הזאת. */
+async function expectShown(page: Page, expected: string): Promise<void> {
+  await expect.poll(() => shownCombination(page)).toBe(expected);
+}
+
 function pageStatus(page: Page): Locator {
   return page.locator('.page-status');
 }
@@ -33,7 +45,7 @@ async function start(page: Page, n: number): Promise<void> {
 async function clickNext(page: Page, times: number): Promise<void> {
   for (let i = 1; i <= times; i++) {
     await button(page, 'הבא').click();
-    await expect(currentLine(page)).toContainText(`קומבינציה מספר ${i} –`);
+    await expect(currentLine(page)).toHaveText(`קומבינציה מספר ${i}`);
   }
 }
 
@@ -69,22 +81,22 @@ test('"next" walks the assignment sequence, "previous" goes back', async ({ page
   const expected = ['[1,2,3]', '[1,3,2]', '[2,1,3]', '[2,3,1]', '[3,1,2]', '[3,2,1]'];
   for (let i = 0; i < expected.length; i++) {
     await button(page, 'הבא').click();
-    await expect(currentLine(page)).toHaveText(`קומבינציה מספר ${i + 1} – ${expected[i]}`);
+    await expectShown(page, `קומבינציה מספר ${i + 1} – ${expected[i]}`);
   }
 
   await button(page, 'הקודם').click();
-  await expect(currentLine(page)).toHaveText('קומבינציה מספר 5 – [3,1,2]');
+  await expectShown(page, 'קומבינציה מספר 5 – [3,1,2]');
 });
 
 test('after the last combination: "no more combinations"', async ({ page }) => {
   await start(page, 1);
 
   await button(page, 'הבא').click();
-  await expect(currentLine(page)).toHaveText('קומבינציה מספר 1 – [1]');
+  await expectShown(page, 'קומבינציה מספר 1 – [1]');
 
   await button(page, 'הבא').click();
   await expect(page.locator('.alert-info')).toHaveText('אין יותר קומבינציות');
-  await expect(currentLine(page)).toHaveText('קומבינציה מספר 1 – [1]');
+  await expectShown(page, 'קומבינציה מספר 1 – [1]');
 });
 
 // ---------- כל הקומבינציות ----------
@@ -99,7 +111,7 @@ test('"all combinations" starts after the last one shown; "back" shows the last 
   await expect(rows(page).first()).toContainText('[2,1,3]');
 
   await button(page, 'חזור').click();
-  await expect(currentLine(page)).toHaveText('קומבינציה מספר 6 – [3,2,1]');
+  await expectShown(page, 'קומבינציה מספר 6 – [3,2,1]');
 
   await button(page, 'הבא').click();
   await expect(page.locator('.alert-info')).toHaveText('אין יותר קומבינציות');
@@ -139,7 +151,7 @@ test('paging: page size, next, last and first by number, jump, page link and bac
   await expect(pageStatus(page)).toHaveText('דף 4 מתוך 5');
 
   await button(page, 'חזור').click();
-  await expect(currentLine(page)).toHaveText('קומבינציה מספר 20 – [4,1,3,2]');
+  await expectShown(page, 'קומבינציה מספר 20 – [4,1,3,2]');
 });
 
 test('jump to a page that does not exist shows the server message and keeps the page', async ({ page }) => {
@@ -175,7 +187,7 @@ test('a page refresh restores the same state from the server', async ({ page }) 
   await clickNext(page, 2);
 
   await page.reload();
-  await expect(currentLine(page)).toHaveText('קומבינציה מספר 2 – [1,3,2]');
+  await expectShown(page, 'קומבינציה מספר 2 – [1,3,2]');
 
   await button(page, 'כל הקומבינציות').click();
   await expect(pageStatus(page)).toHaveText('דף 1 מתוך 1');
@@ -206,8 +218,8 @@ test('two tabs are two independent sessions', async ({ context }) => {
 
   await first.reload();
   await second.reload();
-  await expect(currentLine(first)).toHaveText('קומבינציה מספר 1 – [1,2,3]');
-  await expect(currentLine(second)).toHaveText('קומבינציה מספר 3 – [1,3,2,4]');
+  await expectShown(first, 'קומבינציה מספר 1 – [1,2,3]');
+  await expectShown(second, 'קומבינציה מספר 3 – [1,3,2,4]');
   await expect(first.locator('.stat-value').nth(1)).toHaveText('6');
   await expect(second.locator('.stat-value').nth(1)).toHaveText('24');
 });

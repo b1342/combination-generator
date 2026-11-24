@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 import { combination } from '../../../../../testing/fixtures';
-import { buttonByText, text } from '../../../../../testing/dom';
+import { buttonByText, text, shownCombination } from '../../../../../testing/dom';
 import { CombinationDto } from '../../data-access/generator-api.models';
 import { NextViewComponent } from './next-view.component';
 
@@ -33,7 +33,7 @@ describe('NextViewComponent', () => {
   it('shows the combination in the assignment format', () => {
     const { fixture } = create(combination('2', [1, 3, 2]));
 
-    expect(text(fixture)).toContain('קומבינציה מספר 2 – [1,3,2]');
+    expect(shownCombination(fixture)).toBe('קומבינציה מספר 2 – [1,3,2]');
   });
 
   it('groups digits of a huge serial number without rounding', () => {
