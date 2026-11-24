@@ -58,26 +58,38 @@ describe('PaginationComponent', () => {
     expect(current.disabled).toBe(true);
   });
 
-  it('first page: "first" and "previous" are disabled; last page: "next" and "last"', () => {
+  it('first page: "previous" is disabled; last page: "next" is disabled', () => {
     const first = create(page({ pageNumber: '1', totalPages: '3' })).fixture;
-    expect(buttonByText(first, 'דף ראשון').disabled).toBe(true);
     expect(buttonByText(first, 'דף קודם').disabled).toBe(true);
     expect(buttonByText(first, 'דף הבא').disabled).toBe(false);
 
     const last = create(page({ pageNumber: '3', totalPages: '3' })).fixture;
     expect(buttonByText(last, 'דף הבא').disabled).toBe(true);
-    expect(buttonByText(last, 'דף אחרון').disabled).toBe(true);
     expect(buttonByText(last, 'דף קודם').disabled).toBe(false);
   });
 
-  it('the four direction buttons emit their action, without a page number', () => {
+  it('only the numbers lead to the first and last page: no separate "first" / "last" buttons', () => {
     const { fixture, emitted } = create(middle);
 
-    for (const label of ['דף ראשון', 'דף קודם', 'דף הבא', 'דף אחרון']) {
-      buttonByText(fixture, label).click();
-    }
+    const labels = Array.from(fixture.nativeElement.querySelectorAll('button')).map(b => (b as HTMLElement).textContent?.trim());
+    expect(labels).not.toContain('דף ראשון');
+    expect(labels).not.toContain('דף אחרון');
 
-    expect(emitted).toEqual([{ action: 'First' }, { action: 'Previous' }, { action: 'Next' }, { action: 'Last' }]);
+    buttonByText(fixture, '1').click();
+    buttonByText(fixture, '12').click();
+    expect(emitted).toEqual([
+      { action: 'Specific', pageNumber: '1' },
+      { action: 'Specific', pageNumber: '12' },
+    ]);
+  });
+
+  it('"previous" and "next" emit their action, without a page number', () => {
+    const { fixture, emitted } = create(middle);
+
+    buttonByText(fixture, 'דף קודם').click();
+    buttonByText(fixture, 'דף הבא').click();
+
+    expect(emitted).toEqual([{ action: 'Previous' }, { action: 'Next' }]);
   });
 
   it('a page link emits Specific with the exact number string, even beyond 2^53', () => {

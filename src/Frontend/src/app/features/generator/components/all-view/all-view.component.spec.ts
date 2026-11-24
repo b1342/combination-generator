@@ -76,4 +76,20 @@ describe('AllViewComponent', () => {
 
     expect(text(fixture)).toContain('דף 1 מתוך 2');
   });
+
+  it.each([
+    ['1', ['5']],
+    ['6', ['5', '10']],
+    ['20', ['5', '10', '20']],
+    ['24', ['5', '10', '20', '50']],
+    ['2432902008176640000', ['5', '10', '20', '50', '100']],
+  ])('with %s combinations offers only the page sizes that make sense', (totalCount, expected) => {
+    const fixture = TestBed.createComponent(AllViewComponent);
+    fixture.componentRef.setInput('page', page({ pageSize: 5 }));
+    fixture.componentRef.setInput('totalCount', totalCount);
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector('#page-size') as HTMLSelectElement;
+    expect(Array.from(select.options).map(o => o.value)).toEqual(expected);
+  });
 });

@@ -77,7 +77,7 @@ describe('GeneratorPageComponent', () => {
 
     buttonByText(fixture, 'כל הקומבינציות').click();
     const entry = http.expectOne(`${base}/${SESSION_ID}/all`);
-    expect(entry.request.body).toEqual({ action: 'First', pageSize: 20 });
+    expect(entry.request.body).toEqual({ action: 'First', pageSize: 10 }); // 6 קומבינציות: אין טעם ב-20
     entry.flush(allSession());
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('table')).not.toBeNull();

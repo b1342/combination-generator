@@ -209,8 +209,20 @@ describe('GeneratorFacade', () => {
       facade.enterAll();
       respond(all, allSession());
 
-      expect(api.showAll).toHaveBeenCalledWith(SESSION_ID, { action: 'First', pageSize: 20 });
+      // יש רק 6 קומבינציות: במקום 20, הגודל הקטן שכבר מציג את כולן
+      expect(api.showAll).toHaveBeenCalledWith(SESSION_ID, { action: 'First', pageSize: 10 });
       expect(facade.session()?.mode).toBe('All');
+    });
+
+    it('with many combinations, enters with the default page size', () => {
+      setup();
+      startWith(session({ n: 20, totalCount: '2432902008176640000' }));
+      const all = pending<SessionDto>(api.showAll);
+
+      facade.enterAll();
+      respond(all, allSession());
+
+      expect(api.showAll).toHaveBeenCalledWith(SESSION_ID, { action: 'First', pageSize: 20 });
     });
 
     it('navigates with the page size of the current page, page number as a string', () => {
@@ -263,7 +275,7 @@ describe('GeneratorFacade', () => {
       const entry = pending<SessionDto>(api.showAll);
       facade.enterAll();
       respond(entry, allSession());
-      expect(api.showAll).toHaveBeenLastCalledWith(SESSION_ID, { action: 'First', pageSize: 20 });
+      expect(api.showAll).toHaveBeenLastCalledWith(SESSION_ID, { action: 'First', pageSize: 10 });
     });
 
     it('an edge error (no next page) keeps the page and shows the message', () => {

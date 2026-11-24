@@ -105,27 +105,29 @@ test('"all combinations" starts after the last one shown; "back" shows the last 
   await expect(page.locator('.alert-info')).toHaveText('אין יותר קומבינציות');
 });
 
-test('paging: page size, next, last, first, jump, page link and back', async ({ page }) => {
+test('paging: page size, next, last and first by number, jump, page link and back', async ({ page }) => {
   await start(page, 4); // 24 קומבינציות
   await button(page, 'כל הקומבינציות').click();
 
+  // 24 קומבינציות: מוצעים רק 5, 10, 20 ו-50 (50 כבר מציג את כולן)
+  await expect(page.getByLabel('שורות בעמוד').locator('option')).toHaveText(['5', '10', '20', '50']);
   await page.getByLabel('שורות בעמוד').selectOption('5');
   await expect(pageStatus(page)).toHaveText('דף 1 מתוך 5');
   await expect(rows(page)).toHaveCount(5);
-  await expect(button(page, 'דף ראשון')).toBeDisabled();
+  await expect(button(page, '1')).toBeDisabled(); // הדף הנוכחי
   await expect(button(page, 'דף קודם')).toBeDisabled();
 
   await button(page, 'דף הבא').click();
   await expect(pageStatus(page)).toHaveText('דף 2 מתוך 5');
   await expect(rows(page).first()).toContainText('[1,4,3,2]'); // מספר 6
 
-  await button(page, 'דף אחרון').click();
+  await button(page, '5').click(); // הדף האחרון: המספר שלו תמיד מופיע
   await expect(pageStatus(page)).toHaveText('דף 5 מתוך 5');
   await expect(rows(page)).toHaveCount(4); // עמוד אחרון חלקי: 21..24
   await expect(rows(page).last()).toContainText('[4,3,2,1]');
-  await expect(button(page, 'דף אחרון')).toBeDisabled();
+  await expect(button(page, 'דף הבא')).toBeDisabled();
 
-  await button(page, 'דף ראשון').click();
+  await button(page, '1').click(); // הדף הראשון
   await expect(pageStatus(page)).toHaveText('דף 1 מתוך 5');
 
   await page.getByLabel('מעבר לדף').fill('3');
@@ -159,7 +161,7 @@ test('n = 20: exact numbers far beyond 2^53, last page computed directly', async
   await expect(page.locator('.stat-value').nth(1)).toHaveText('2,432,902,008,176,640,000');
 
   await button(page, 'כל הקומבינציות').click();
-  await button(page, 'דף אחרון').click();
+  await button(page, '121,645,100,408,832,000').click(); // הדף האחרון, ישר מהמספר שלו
 
   await expect(pageStatus(page)).toHaveText('דף 121,645,100,408,832,000 מתוך 121,645,100,408,832,000');
   await expect(rows(page).last()).toContainText('2,432,902,008,176,640,000');

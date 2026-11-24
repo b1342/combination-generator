@@ -5,7 +5,7 @@ import { GeneratorApiService } from './data-access/generator-api.service';
 import { PageAction, PageNavigation, SessionDto } from './data-access/generator-api.models';
 import { toUiError } from './data-access/generator-errors';
 import { SessionIdStorage } from './data-access/session-id-storage';
-import { DEFAULT_PAGE_SIZE, REQUEST_TIMEOUT_MS } from './generator.config';
+import { DEFAULT_PAGE_SIZE, pageSizeOptionsFor, REQUEST_TIMEOUT_MS } from './generator.config';
 
 /** הגדרות לבקשה אחת. */
 interface RunOptions {
@@ -98,9 +98,16 @@ export class GeneratorFacade {
     this.withSession(id => this.api.previous(id));
   }
 
-  /** "כל הקומבינציות": הכניסה היא תמיד לדף הראשון. */
+  /**
+   * "כל הקומבינציות": הכניסה היא תמיד לדף הראשון.
+   * אם הגודל המועדף גדול מהנדרש (למשל 20 כשיש רק 6 קומבינציות), לוקחים את הגודל הקטן שכבר מציג את כולן.
+   */
   enterAll(): void {
-    this.withSession(id => this.api.showAll(id, { action: 'First', pageSize: this._preferredPageSize() }));
+    const options = pageSizeOptionsFor(this._session()?.totalCount ?? null);
+    const preferred = this._preferredPageSize();
+    const pageSize = options.includes(preferred) ? preferred : Math.min(preferred, options[options.length - 1]);
+
+    this.withSession(id => this.api.showAll(id, { action: 'First', pageSize }));
   }
 
   /** כפתורי הדפדוף: ראשון, קודם, הבא, אחרון, מספר דף, קפיצה לדף. */

@@ -53,6 +53,7 @@
         @if (session.page; as page) {
           <app-all-view
             [page]="page"
+            [totalCount]="session.totalCount"
             [disabled]="facade.busy() || facade.outOfSync()"
             (navigateRequested)="facade.navigate($event)"
             (pageSizeChanged)="facade.changePageSize($event)"

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { PageDto, PageNavigation } from '../../data-access/generator-api.models';
-import { PAGE_SIZE_OPTIONS } from '../../generator.config';
+import { pageSizeOptionsFor } from '../../generator.config';
 import { GroupDigitsPipe } from '../../presentation/group-digits.pipe';
 import { PaginationComponent } from '../pagination/pagination.component';
 
@@ -13,15 +13,18 @@ import { PaginationComponent } from '../pagination/pagination.component';
 })
 export class AllViewComponent {
   readonly page = input.required<PageDto>();
+
+  /** כמה קומבינציות יש בסך הכול. קובע אילו גדלי עמוד מציעים. */
+  readonly totalCount = input<string | null>(null);
   readonly disabled = input(false);
 
   readonly navigateRequested = output<PageNavigation>();
   readonly pageSizeChanged = output<number>();
   readonly backRequested = output<void>();
 
-  /** האפשרויות ברשימה, כולל הגודל הנוכחי אם הוא לא אחד מהקבועים. */
+  /** האפשרויות ברשימה: רק גדלים שמתאימים לכמות הקומבינציות, ותמיד גם הגודל הנוכחי. */
   readonly pageSizes = computed(() =>
-    [...new Set([...PAGE_SIZE_OPTIONS, this.page().pageSize])].sort((a, b) => a - b));
+    [...new Set([...pageSizeOptionsFor(this.totalCount()), this.page().pageSize])].sort((a, b) => a - b));
 
   onPageSizeChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
